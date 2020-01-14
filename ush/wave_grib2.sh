@@ -12,6 +12,7 @@
 #                                                                July, 2007   #
 # Update log                                                                  #
 # Nov2019 JHAlves - Merging wave scripts to global workflow                   #
+# Jan2020 RPadilla, JHAlves  - Adding error checking                          #
 #                                                                             #
 ###############################################################################
 
@@ -43,13 +44,15 @@
   then
     set +x
     echo ' '
-    echo '******************************************************************************* '
+    echo '********************************************************************* **** '
     echo '*** FATAL ERROR : ERROR IN ww3_grib2 (COULD NOT CREATE TEMP DIRECTORY) *** '
-    echo '******************************************************************************* '
+    echo '************************************************************************** '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : ERROR IN ww3_grib2 (Could not create temp directory)"
-    exit 1
+    echo " ERROR IN ww3_grib2 (COULD NOT CREATE TEMP DIRECTORY)" >> $wavelog
+    msg= "FATAL ERROR : ERROR IN ww3_grib2 (Could not create temp directory)"
+    postmsg "$jlogfile" "$msg"
+    err=1;export err;${errchk} || exit ${err}
   fi
 
   cd ${gribDIR}
@@ -78,13 +81,15 @@
   then
     set +x
     echo ' '
-    echo '***************************************************'
-    echo '*** EXPORTED VARIABLES IN postprocessor NOT SET ***'
-    echo '***************************************************'
+    echo '******************************************************************'
+    echo '*** EXPORTED VARIABLES IN postprocessor NOT SET in wave_grib2 *** '
+    echo '***************************************************************** '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "EXPORTED VARIABLES IN postprocessor NOT SET"
-    exit 1
+    echo "EXPORTED VARIABLES IN postprocessor NOT SET in wave_grib2  " >> $wavelog
+    msg="EXPORTED VARIABLES IN postprocessor NOT SET"
+    postmsg "$jlogfile" "msg"
+    err=2;export err;${errchk} || exit ${err}
   fi
 
 # 0.c Starting time for output
@@ -137,13 +142,15 @@
   then
     set +x
     echo ' '
-    echo '********************************************* '
-    echo '*** FATAL ERROR : ERROR IN ww3_grib2 *** '
-    echo '********************************************* '
+    echo '******************************************************************* '
+    echo '*** FATAL ERROR : ERROR IN ww3_grib2 running $EXECcode/ww3_grib *** '
+    echo '******************************************************************* '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : ERROR IN ww3_grib2"
-    exit 3
+    echo " ERROR IN ww3_grib2 running $EXECcode/ww3_grib" >> $wavelog
+    msg="FATAL ERROR : ERROR IN ww3_grib2 running $EXECcode/ww3_grib"
+    postmsg "$jlogfile" "$msg"
+    err=3;export err;${errchk} || exit ${err}
   fi
 
 # 1.c Clean up
@@ -166,29 +173,33 @@
     then
       set +x
       echo ' '
-      echo '********************************************* '
-      echo '*** FATAL ERROR : ERROR IN ww3_grib2 *** '
-      echo '********************************************* '
+      echo '***************************************************************** '
+      echo '*** FATAL ERROR : ERROR IN ww3_grib2 moving grib2 file to  com*** '
+      echo '***************************************************************** '
       echo ' '
       echo " Error in moving grib file $WAV_MOD_TAG.$grdID.$cycle.grib2 to com"
       echo ' '
       [[ "$LOUD" = YES ]] && set -x
-      postmsg "$jlogfile" "FATAL ERROR : ERROR IN ww3_grib2"
-      exit 4
+      echo "RROR IN ww3_grib2 moving grib2 file to  com " >> $wavelog
+      msg= "Error in moving grib file $WAV_MOD_TAG.$grdID.$cycle.grib2 to com"
+      postmsg "$jlogfile" "$msg"
+      err=4;export err;${errchk} || exit ${err}
     fi
     if [ ! -f $COMOUT/gridded/$WAV_MOD_TAG.$grdID.$cycle.grib2.idx ]
     then
       set +x
       echo ' '
-      echo '*************************************************** '
-      echo '*** FATAL ERROR : ERROR IN ww3_grib2 INDEX FILE *** '
-      echo '*************************************************** '
+      echo '********************************************************************** '
+      echo '*** FATAL ERROR : ERROR IN ww3_grib2 moving the INDEX FILE to  com *** '
+      echo '********************************************************************** '
       echo ' '
-      echo " Error in moving grib file $WAV_MOD_TAG.$grdID.$cycle.grib2idx to com"
+      echo " Error in moving grib file $WAV_MOD_TAG.$grdID.$cycle.grib2.idx to com"
       echo ' '
       [[ "$LOUD" = YES ]] && set -x
-      postmsg "$jlogfile" "FATAL ERROR : ERROR IN creating ww3_grib2 index"
-      exit 4
+      echo " ERROR IN ww3_grib2 moving the INDEX FILE to  com" >> $wavelog
+      msg="FATAL ERROR : ERROR IN creating ww3_grib2 index"
+      postmsg "$jlogfile" "$msg"
+      err=5;export err;${errchk} || exit ${err}
     fi
 
     if [ "$SENDDBN" = 'YES' ]

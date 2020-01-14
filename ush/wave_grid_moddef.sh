@@ -13,6 +13,7 @@
 #                                                            April 08, 2011   #
 # Update log                                                                  #
 # Nov2019 JHAlves - Merging wave scripts to global workflow                   #
+# Jan2020 RPadilla, JHAlves  - Adding error checking                          #
 #                                                                             #
 ###############################################################################
 #
@@ -27,10 +28,26 @@
   # Use LOUD variable to turn on/off trace.  Defaults to YES (on).
   export LOUD=${LOUD:-YES}; [[ $LOUD = yes ]] && export LOUD=YES
   [[ "$LOUD" != YES ]] && set +x
-
-  postmsg "$jlogfile" "Generating mod_def file"
+  msg="Generating mod_def file"
+  postmsg "$jlogfile" "$msg"
 
   mkdir -p moddef_${1}
+  err=$?
+  if [ "$err" != '0' ]
+  then
+    set +x
+    echo ' '
+    echo '************************************************************************** '
+    echo '*** FATAL ERROR : In ww3_grid_moddef (COULD NOT CREATE TEMP DIRECTORY) *** '
+    echo '************************************************************************** '
+    echo ' '
+    [[ "$LOUD" = YES ]] && set -x
+    echo " ERROR IN ww3_grid_moddef(COULD NOT CREATE TEMP DIRECTORY)" >> $wavelog
+    msg="FATAL ERROR : ERROR IN ww3_grid_interp (Could not create temp directory)"
+    postmsg "$jlogfile" "$msg"
+    err=1;export err;${errchk} || exit ${err}
+  fi
+
   cd moddef_${1}
 
   grdID=$1
@@ -50,13 +67,15 @@
   then
     set +x
     echo ' '
-    echo '**************************************************'
-    echo '*** Grid not identifife in ww3_mod_def.sh ***'
-    echo '**************************************************'
+    echo '*************************************** '
+    echo '*** Grid in ww3_mod_def.sh NOT SET  *** '
+    echo '*************************************** '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "GRID IN ww3_mod_def.sh NOT SET"
-    exit 1
+    echo " Grid in ww3_mod_def.sh NOT SET" >> $wavelog
+    msg="GRID IN ww3_mod_def.sh NOT SET"
+    postmsg "$jlogfile" "$msg"
+    err=2;export err;${errchk} || exit ${err}
   else
     grdID=$1
   fi
@@ -68,13 +87,14 @@
   then
     set +x
     echo ' '
-    echo '*********************************************************'
+    echo '****************************************************'
     echo '*** EXPORTED VARIABLES IN ww3_mod_def.sh NOT SET ***'
-    echo '*********************************************************'
+    echo '****************************************************'
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
+    echo "EXPORTED VARIABLES IN ww3_mod_def.sh NOT SET " >> $wavelog
     postmsg "$jlogfile" "EXPORTED VARIABLES IN ww3_mod_def.sh NOT SET"
-    exit 2
+    err=3;export err;${errchk} || exit ${err}
   fi
 
 # --------------------------------------------------------------------------- #
@@ -98,12 +118,14 @@
     set +x
     echo ' '
     echo '******************************************** '
-    echo '*** FATAL ERROR : ERROR IN ww3_grid *** '
+    echo '*** FATAL ERROR : ERROR running ww3_grid *** '
     echo '******************************************** '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : ERROR IN ww3_grid"
-    exit 3
+    echo "FATAL ERROR : running ww3_grid " >> $wavelog
+    msg="FATAL ERROR : running ww3_grid"
+    postmsg "$jlogfile" "$msg"
+    err=4;export err;${errchk} || exit ${err}
   fi
  
   if [ -f mod_def.ww3 ]
@@ -118,8 +140,10 @@
     echo '******************************************** '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : Mod def File creation FAILED"
-    exit 4
+    echo "FATAL ERROR : MOD DEF FILE NOT FOUND " >> $wavelog
+    msg="FATAL ERROR : Mod def File creation FAILED"
+    postmsg "$jlogfile" "$msg" 
+    err=5;export err;${errchk} || exit ${err}
   fi
 
 # --------------------------------------------------------------------------- #

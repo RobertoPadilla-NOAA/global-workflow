@@ -2,7 +2,7 @@
 ###############################################################################
 #                                                                             #
 # This is the preprocessor for the wave component in NCEP's coupled system.   #
-# It sets some shell script variables for export to child scripts and copies   #
+# It sets some shell script variables for export to child scripts and copies  #
 # some generally used files to the work directory. After this the actual      #
 # preprocessing is performed by the following child scripts :                 #
 #                                                                             #
@@ -25,10 +25,11 @@
 # Nov2012 JHAlves - Transitioning to WCOSS                                    #
 # Apr2019 JHAlves - Transitioning to GEFS workflow                            #
 # Nov2019 JHAlves - Merging wave scripts to global workflow                   #
+# Jan2020 RPadilla, JHAlves  - Adding error checking                          #
 #                                                                             #
-#   WAV_MOD_ID and WAV_MOD_TAG replace modID. WAV_MOD_TAG                        # 
+#   WAV_MOD_ID and WAV_MOD_TAG replace modID. WAV_MOD_TAG                     # 
 #   is used for ensemble-specific I/O. For deterministic                      #
-#   WAV_MOD_ID=WAV_MOD_TAG                                                      # 
+#   WAV_MOD_ID=WAV_MOD_TAG                                                    # 
 #                                                                             #
 ###############################################################################
 # --------------------------------------------------------------------------- #
@@ -109,7 +110,7 @@
   if [ -z ${NTASKS} ]        
   then
     echo "FATAL ERROR: Requires NTASKS to be set "
-    err=1; export err;${errchk}
+    err=1; export err;${errchk}|| exit ${err}
   fi
 
 # --------------------------------------------------------------------------- #
@@ -143,8 +144,6 @@
       cp $COMIN/rundata/${WAV_MOD_ID}.mod_def.${grdID} mod_def.$grdID
 
     else
-      msg="FATAL ERROR: NO MODEL DEFINITION FILE"
-      postmsg "$jlogfile" "$msg"
       set +x
       echo ' '
       echo '*********************************************************** '
@@ -155,7 +154,9 @@
       echo $msg
       [[ "$LOUD" = YES ]] && set -x
       echo "$WAV_MOD_ID prep $date $cycle : ${WAV_MOD_ID}.mod_def.${grdID} missing." >> $wavelog
-      err=2;export err;${errchk}
+      msg="FATAL ERROR: NO MODEL DEFINITION FILE"
+      postmsg "$jlogfile" "$msg"
+      err=2;export err;${errchk} || exit ${err}
     fi
   done
 
@@ -175,8 +176,11 @@
                 type='ice'
        ;;
        * )
-              echo 'Input type not yet implemented' 	    
-              err=3; export err;${errchk}
+              echo 'Input type not yet implemented' 	
+              msg="Input type $grdID not yet implemented"
+              postmsg "$jlogfile" "$msg"    
+              echo "Input type $grdID not yet implemented " >> $wavelog
+              err=3; export err;${errchk} || exit ${err}
               ;;
      esac 
 
@@ -193,8 +197,6 @@
        echo ' '
        [[ "$LOUD" = YES ]] && set -x
      else
-       msg="ABNORMAL EXIT: NO FILE $file"
-       ./postmsg "$jlogfile" "$msg"
        set +x
        echo ' '
        echo '************************************** '
@@ -205,8 +207,10 @@
        echo $msg
        echo ' '
        [[ "$LOUD" = YES ]] && set -x
-       echo "$WAV_MOD_ID prep $date $cycle : ww3_prnc.${type}.$grdID.tmpl missing." >> $wavelog
-       err=4;export err;${errchk}
+       echo "$WAV_MOD_ID prep $date $cycle : ww3_prnc.${type}.$grdID.inp.tmpl  missing." >> $wavelog
+       msg="ABNORMAL EXIT: NO FILE $file"
+       postmsg "$jlogfile" "$msg"
+       err=4;export err;${errchk} || exit ${err}
      fi
    done
 
@@ -228,7 +232,7 @@
     
       if [ -d ice ]
       then
-        postmsg "$jlogfile" "FATAL ERROR ice field not generated."
+
         set +x
         echo ' '
         echo '      FATAL ERROR: ice field not generated '
@@ -236,7 +240,9 @@
         sed "s/^/ice.out : /g" ice.out
         echo ' '
         [[ "$LOUD" = YES ]] && set -x
-        err=5;export err;${errchk}
+        msg="FATAL ERROR ice field not generated."
+        postmsg "$jlogfile" "$msg"
+        err=5;export err;${errchk} || exit ${err}
       else
         mv -f ice.out $DATA/outtmp
         rm -f ww3_prep.$iceID.tmpl mod_def.$iceID
@@ -315,6 +321,8 @@
         echo '     See Details Below '
         echo ' '
         [[ "$LOUD" = YES ]] && set -x
+       echo " EROR: See Details Below " >> $wavelog
+
       fi
    
 # 3.c Check for errors
@@ -350,6 +358,10 @@
           postmsg "$jlogfile" "    File for $ymdh : error in wave_g2ges.sh"
           nr_err=`expr $nr_err + 1`
           rm -f gwnd.$ymdh
+          echo "File for $ymdh : error in wave_g2ges.sh" >> $wavelog
+          msg="File for $ymdh : error in wave_g2ges.sh"
+          postmsg "$jlogfile" "$msg"
+          err=6;export err;${errchk} || exit ${err}
         else
           grbfile=`grep 'File for' grb_${ymdh}.out`
           if [ -z "$grbfile" ]
@@ -361,6 +373,10 @@
             [[ "$LOUD" = YES ]] && set -x
             nr_err=`expr $nr_err + 1`
             rm -f gwnd.$ymdh
+            echo "File for $ymdh : cannot identify source" >> $wavelog
+            msg="File for $ymdh : cannot identify source"
+            postmsg "$jlogfile" "$msg"
+            err=7;export err;${errchk} || exit ${err}
           else
             if [ ! -f gwnd.$ymdh ]
             then
@@ -370,6 +386,10 @@
               echo ' '
               [[ "$LOUD" = YES ]] && set -x
               nr_err=`expr $nr_err + 1`
+              echo "File for $ymdh : file not found" >> $wavelog
+              msg="File for $ymdh : file not found"
+              postmsg "$jlogfile" "$msg"
+              err=8;export err;${errchk} || exit ${err}
             else
               set +x
               echo ' '
@@ -402,13 +422,14 @@
         echo ' '
         [[ "$LOUD" = YES ]] && set -x
         mv -f grb_*.out $DATA/outtmp
-        postmsg "$jlogfile" "NON-FATAL ERROR in wave_g2ges.sh, possibly in multiple calls."
+        msg="ERROR OUTPUT wave_g2ges.sh possibly in multiple calls."
+        postmsg "$jlogfile" "FATAL ERROR in wave_g2ges.sh, possibly in multiple calls."
+        err=9;export err;${errchk} || exit ${err}
       fi
     
       if [ "$nr_err" -gt "$err_max" ]
       then
-        msg="ABNORMAL EXIT: TOO MANY MISSING WIND INPUT GRB2 FILES"
-        postmsg "$jlogfile" "$msg"
+
         set +x
         echo ' '
         echo '********************************************* '
@@ -417,8 +438,10 @@
         echo ' '
         echo $msg
         [[ "$LOUD" = YES ]] && set -x
-        echo "$WAV_MOD_TAG prep $date $cycle : fatal error in grib2 wind files." >> $wavelog
-        err=6;export err;${errchk}
+        msg="ABNORMAL EXIT: TOO MANY MISSING WIND INPUT GRB2 FILES"
+        postmsg "$jlogfile" "$msg"
+        echo "ABNORMAL EXIT: TOO MANY MISSING WIND INPUT GRB2 FILES" >> $wavelog
+        err=10;export err;${errchk} || exit ${err}
       fi
   
       rm -f cmdfile
@@ -435,8 +458,6 @@
 
       if [ -z "$files" ]
       then
-        msg="ABNORMAL EXIT: NO gwnd.* FILES FOUND"
-        postmsg "$jlogfile" "$msg"
         set +x
         echo ' '
         echo '******************************************** '
@@ -445,7 +466,9 @@
         echo ' '
         [[ "$LOUD" = YES ]] && set -x
         echo "$WAV_MOD_TAG prep $date $cycle : no wind files found." >> $wavelog
-        err=7;export err;${errchk}
+        msg="ABNORMAL EXIT: NO gwnd.* FILES FOUND"
+        postmsg "$jlogfile" "$msg"
+        err=11;export err;${errchk} || exit ${err}
       fi
   
       rm -f gfs.wind
@@ -482,8 +505,6 @@
   
         if [ "$err" != '0' ]
         then
-          msg="ABNORMAL EXIT: ERROR IN waveprnc"
-          postmsg "$jlogfile" "$msg"
           set +x
           echo ' '
           echo '*************************************** '
@@ -492,13 +513,13 @@
           echo ' '
           [[ "$LOUD" = YES ]] && set -x
           echo "$WAV_MOD_TAG prep $grdID $date $cycle : error in waveprnc." >> $wavelog
-          err=8;export err;${errchk}
+          msg="ABNORMAL EXIT: ERROR IN waveprnc"
+          postmsg "$jlogfile" "$msg"
+          err=12;export err;${errchk} || exit ${err}
         fi
   
         if [ ! -f wind.ww3 ]
         then
-          msg="ABNORMAL EXIT: FILE wind.ww3 MISSING"
-          postmsg "$jlogfile" "$msg"
           set +x
           echo ' '
           cat waveprep.out
@@ -509,7 +530,9 @@
           echo ' '
           [[ "$LOUD" = YES ]] && set -x
           echo "$WAV_MOD_TAG prep $grdID $date $cycle : wind.ww3 missing." >> $wavelog
-          err=9;export err;${errchk}
+          msg="ABNORMAL EXIT: FILE wind.ww3 MISSING"
+          postmsg "$jlogfile" "$msg"
+          err=13;export err;${errchk} || exit ${err}
         fi
 
         rm -f mod_def.ww3
@@ -552,7 +575,9 @@
           echo ' '
           [[ "$LOUD" = YES ]] && set -x
           echo "$WAV_MOD_TAG prep $grdID $date $cycle : error in wind increment." >> $wavelog
-          err=10;export err;${errchk}
+          msg="WIND DATA INCREMENT INCORRECT"
+          postmsg "$jlogfile" "$msg"
+          err=14;export err;${errchk} || exit ${err}
         fi
     
       done
@@ -643,8 +668,6 @@
 
       if [ -z "$files" ]
       then
-        msg="ABNORMAL EXIT: NO rtofs.* FILES FOUND"
-        postmsg "$jlogfile" "$msg"
         set +x
         echo ' '
         echo '******************************************** '
@@ -653,7 +676,9 @@
         echo ' '
         [[ "$LOUD" = YES ]] && set -x
         echo "$WAV_MOD_TAG prep $date $cycle : no current files found." >> $wavelog
-        err=11;export err;${errchk}
+        msg="ABNORMAL EXIT: NO rtofs.* FILES FOUND"
+        postmsg "$jlogfile" "$msg"
+        err=15;export err;${errchk} || exit ${err}
       fi
 
       rm -f cur.${curID}
@@ -692,18 +717,17 @@
 
   if [ ! -f ww3_multi.inp.tmpl ]
   then
-    msg="ABNORMAL EXIT: NO TEMPLATE FOR INPUT FILE"
-    postmsg "$jlogfile" "$msg"
     set +x
     echo ' '
     echo '************************************************ '
     echo '*** FATAL ERROR : NO TEMPLATE FOR INPUT FILE *** '
     echo '************************************************ '
     echo ' '
-    echo "${WAV_MOD_TAG} fcst $date $cycle : ww3_multi file missing." >> $wavelog
-    echo $msg
     [[ "$LOUD" = YES ]] && set -x
-    err=12;export err;${errchk}
+    echo "${WAV_MOD_TAG} fcst $date $cycle : ww3_multi file missing." >> $wavelog
+    msg="ABNORMAL EXIT: NO TEMPLATE FOR INPUT FILE"
+    postmsg "$jlogfile" "$msg"
+    err=16;export err;${errchk} || exit ${err}
   fi
 
 # 5.b Buoy location file
@@ -720,12 +744,13 @@
     [[ "$LOUD" = YES ]] && set -x
   else
     set +x
-    echo "   buoy.loc not found.                           **** WARNING **** "
+    echo "    **** FATAL ARROR ****   buoy.loc not found."
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" " FATAL ERROR : buoy.loc ($FIXwave/wave_${NET}.buoys) NOT FOUND"
+    msg="FATAL ERROR : buoy.loc ($FIXwave/wave_${NET}.buoys) NOT FOUND"
+    postmsg "$jlogfile" "$msg"
     touch buoy.loc
     echo "$WAV_MOD_ID fcst $date $cycle : no buoy locations file ($FIXwave/wave_${NET}.buoys)." >> $wavelog
-    err=13;export err;${errchk}
+    err=17;export err;${errchk} || exit ${err}
   fi
 
 # Initialize inp file parameters
@@ -849,7 +874,7 @@
     cp ww3_multi.inp ${COMOUT}/rundata/ww3_multi.${WAV_MOD_TAG}.$cycle.inp
   else
     echo "FATAL ERROR: file ww3_multi.${WAV_MOD_TAG}.$cycle.inp NOT CREATED, ABORTING"
-    err=13;export err;${errchk}
+    err=18;export err;${errchk} || exit ${err}
   fi 
 
 # 6. Copy rmp grid remapping pre-processed coefficients
@@ -860,8 +885,6 @@
       cp -f $file ${COMOUT}/rundata
     done
   else
-    msg="NO rmp precomputed nc files found, is this OK???"
-    postmsg "$jlogfile" "$msg"
     set +x
     echo ' '
     echo '************************************************ '
@@ -869,9 +892,11 @@
     echo '************************************************ '
     echo ' '
     echo "${WAV_MOD_TAG} prep $date $cycle : rmp*.nc not found." >> $wavelog
-    echo $msg
     [[ "$LOUD" = YES ]] && set -x
-    err=13;export err;${errchk}
+    msg="NO rmp precomputed nc files found, is this OK???"
+    postmsg "$jlogfile" "$msg"
+    echo $msg
+    err=19;export err;${errchk} || exit ${err}
   fi
 
 

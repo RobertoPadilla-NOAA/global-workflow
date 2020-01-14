@@ -14,6 +14,7 @@
 #                                                             July 10, 2009   #
 # Update log                                                                  #
 # Nov2019 JHAlves - Merging wave scripts to global workflow                   #
+# Jan2020 RPadilla, JHAlves  - Adding error checking                          #
 #                                                                             #
 ###############################################################################
 #
@@ -44,13 +45,15 @@
   then
     set +x
     echo ' '
-    echo '************************************************************************************* '
-    echo '*** FATAL ERROR : ERROR IN ww3_grid_interp (COULD NOT CREATE TEMP DIRECTORY) *** '
-    echo '************************************************************************************* '
+    echo '****************************************************************************** '
+    echo '*** FATAL ERROR : IN ww3_grid_interp_sbs (COULD NOT CREATE TEMP DIRECTORY) *** '
+    echo '****************************************************************************** '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : ERROR IN ww3_grid_interp (Could not create temp directory)"
-    exit 1
+    echo "  ERROR IN ww3_grid_interp_sbs (COULD NOT CREATE TEMP DIRECTORY)" >> $wavelog
+    msg="FATAL ERROR :IN ww3_grid_interp_sbs (Could not create temp directory)"
+    postmsg "$jlogfile" "$msg"
+    err=1;export err;${errchk} || exit ${err}
   fi
 
   cd grint_${grdID}_${ymdh}
@@ -78,8 +81,9 @@
     echo ' '
     echo "$CDATE $cycle $EXECcode $COMOUT $WAV_MOD_TAG $SENDCOM $SENDDBN $waveGRD"
     [[ "$LOUD" = YES ]] && set -x
+    echo " EXPORTED VARIABLES IN postprocessor NOT SET" >> $wavelog
     postmsg "$jlogfile" "EXPORTED VARIABLES IN postprocessor NOT SET"
-    exit 1
+    err=2;export err;${errchk} || exit ${err}
   fi
 
 # 0.c Links to files
@@ -127,6 +131,11 @@
       set +x
       echo ' '
       echo " Not found: $FIXwave/WHTGRIDINT.bin.${grdID} "
+      [[ "$LOUD" = YES ]] && set -x
+      echo "$FIXwave/WHTGRIDINT.bin.${grdID} NOT FOUND" >> $wavelog
+      msg="FATAL ERROR : FILE $FIXwave/WHTGRIDINT.bin.${grdID} Not found"
+      postmsg "$jlogfile" "$msg"
+      err=3;export err;${errchk} || exit ${err}
     fi
   fi
 # Check and link weights file
@@ -151,19 +160,20 @@
     cp -f ./WHTGRIDINT.bin ${DATA}/WHTGRIDINT.bin.${grdID}
     cp -f ./WHTGRIDINT.bin ${FIXwave}/WHTGRIDINT.bin.${grdID}
   fi
- 
-
   if [ "$err" != '0' ]
   then
     set +x
     echo ' '
-    echo '*************************************************** '
-    echo '*** FATAL ERROR : ERROR IN ww3_gint interpolation * '
-    echo '*************************************************** '
+    echo '********************************************************* '
+    echo '*** FATAL ERROR : ERROR IN ww3_grid_interp_sbs          * '
+    echo '***               moving WHTGRIDINT.bin to ${FIXwave}   * '
+    echo '********************************************************* '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : ERROR IN ww3_gint interpolation"
-    exit 3
+    echo "ERROR moving WHTGRIDINT.bin to ${FIXwave} " >> $wavelog
+    msg="FATAL ERROR : ERROR IN ww3_grid_interp_sbs moving WHTGRIDINT.bin"
+    postmsg "$jlogfile" "$msg"
+    err=4;export err;${errchk} || exit ${err}
   fi
 
 # 1.b Clean up

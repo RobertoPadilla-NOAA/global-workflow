@@ -17,7 +17,7 @@
 # - Jose-Henrique Alves, Jan 2014                               
 #                                                                       
 # Changes:                                                              
-# -                                                                       
+# Jan2020 RPadilla, JHAlves  - Adding error checking                          #
 #                                                                       
 #                                                                       
 ################################################################################
@@ -67,8 +67,10 @@
     echo '******************************************************* '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    ../postmsg "$jlogfile" "FATAL ERROR in ${scripname}: Could not create temp directory"
-    exit 1
+    echo "FATAL ERROR: NOT ABLE TO CREATE TEMP DIR ${BULLdir} " >> $wavelog
+    msg="FATAL ERROR in ${scripname}: Could not create temp directory"
+    postmsg "$jlogfile" "$msg"
+    err=1;export $err;${errchk} || exit ${err}
   fi
 
   cd ${BULLdir}
@@ -97,8 +99,10 @@
     echo '******************************************************* '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    ../postmsg "$jlogfile" "FATAL ERROR creating grbint.${bnom} in ${scripname}"
-    exit 2
+    echo "FATAL ERROR: FAILED TO CREATE FILE grbint.${bnom} " >> $wavelog
+    msg="FATAL ERROR creating grbint.${bnom} in ${scripname}"
+    postmsg "$jlogfile" "$msg"
+    err=2;export $err;${errchk} || exit ${err}
   fi
 #   
 # 1.b Extract parameters at buoy locations from higher res interpolated file 
@@ -151,8 +155,10 @@
     echo '******************************************************* '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    ../postmsg "$jlogfile" "FATAL ERROR reading parameters from grbint.${bnom} in ${scripname}"
-    exit 3
+    echo " FAILED TO READ PARAMS FROM grbint${bnom}" >> $wavelog
+    msg="FATAL ERROR reading parameters from grbint.${bnom} in ${scripname}"
+    postmsg "$jlogfile" "$msg"
+    err=3;export $err;${errchk} || exit ${err}
   fi
 #
 # Warning if any parameter has UNDEF value
@@ -169,7 +175,8 @@
     echo '******************************************************* '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    ../postmsg "$jlogfile" "WARNING: parameter is UNDEFINED in grbint.${bnom} in ${scripname}"
+    msg="WARNING: parameter is UNDEFINED in grbint.${bnom} in ${scripname}"
+    postmsg "$jlogfile" "$msg"
   fi
 #
 # 2. Generate bulletin
@@ -244,8 +251,10 @@
     echo '******************************************************* '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    ../postmsg "$jlogfile" "FATAL ERROR : BULL/TS FILES NOT FOUND"
-    exit 4
+    echo "FATAL ERROR: BULL/TS FILES AT ${bnom} NOT FOUND  " >> $wavelog
+    msg="FATAL ERROR : BULL/TS FILES NOT FOUND"
+    postmsg "$jlogfile" "$msg"
+    err=4;export $err;${errchk} || exit ${err}
   fi
 #
 # 3. Copy and Cleanup

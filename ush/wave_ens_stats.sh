@@ -29,6 +29,22 @@
   fhour=$3
 
   mkdir -p tmp_${para}
+  err=$?
+  if [ "$err" != '0' ]
+  then
+    set +x
+    echo ' '
+    echo '******************************************************* '
+    echo "  FATAL ERROR: NOT ABLE TO CREATE TEMP DIR tmp_${para} "
+    echo '******************************************************* '
+    echo ' '
+    [[ "$LOUD" = YES ]] && set -x
+    echo "FATAL ERROR: NOT ABLE TO CREATE TEMP DIR tmp_${para} " >> $wavelog
+    msg="FATAL ERROR in ${scripname}: Could not create temp directory"
+    postmsg "$jlogfile" "$msg"
+    err=1;export $err;${errchk} || exit ${err}
+  fi
+
   cd tmp_${para}
 
 # 0.b Set general parameter settings
@@ -167,13 +183,18 @@
 
 # 1.b.4 Check for errors
       if [ $ok1 -ne 0 ] ; then
-        echo " *** ERROR : para=$para, im=$im, ok1=$ok1"
-        exit
+        echo '******************************************************* '
+        echo " *** ERROR : Can't create binary file               *** "
+        echo " ***         para=$para, im=$im, ok1=$ok1           *** "
+        echo '******************************************************* '
+        echo "FATAL ERROR:  Can't create binary file  " >> $wavelog
+        msg="FATAL ERROR in ${scripname}: Can't create binary file"
+        postmsg "$jlogfile" "$msg"
+        err=2;export $err;${errchk} || exit ${err}
       fi
       echo data_$im       >> gwes_stats.inp
-
       nme=`expr ${nme} + 1`
-      
+
     done
 
 #
@@ -186,25 +207,27 @@
 # 1.d Check for errors and move output files to tagged grib2 parameter-hour files
    if [ ! -f mean_out ]
    then
-     msg="ABNORMAL EXIT: ERR mean_out not gerenerated for ${nnip} $hhh."
-     postmsg "$jlogfile" "$msg"
      set +x
      echo "--- mean_out not gerenerated for ${nnip} $hhh --- "
      [[ "$LOUD" = YES ]] && set -x
      echo "mean_out not gerenerated for ${nnip} $hhh" >> $wave_log
-     err=1;export err;err_chk
+     msg="ABNORMAL EXIT: ERR mean_out not gerenerated for ${nnip} $hhh."
+     postmsg "$jlogfile" "$msg"
+     err=3;export $err;${errchk} || exit ${err}
    else
      mv -f mean_out    ${nnip}_mean.$hhh.grib2
    fi
    if [ ! -f spread_out ]
    then
-     msg="ABNORMAL EXIT: ERR spread_out not gerenerated for ${nnip} $hhh."
-     postmsg "$jlogfile" "$msg"
      set +x
-     echo "--- spread_out not gerenerated for ${nnip} $hhh --- "
+     echo '******************************************************* '
+     echo "*** spread_out not gerenerated for ${nnip} $hhh     *** "
+     echo '******************************************************* '
      [[ "$LOUD" = YES ]] && set -x
      echo "spread_out not gerenerated for ${nnip} $hhh" >> $wave_log
-     err=1;export err;err_chk
+     msg="ABNORMAL EXIT: ERR spread_out not gerenerated for ${nnip} $hhh."
+     postmsg "$jlogfile" "$msg"
+    err=4;export $err;${errchk} || exit ${err}
    else
      mv -f spread_out  ${nnip}_spread.$hhh.grib2
    fi
@@ -214,13 +237,15 @@
    then
      if [ ! -f probab_out ]
      then
-       msg="ABNORMAL EXIT: ERR probab_out not gerenerated for ${nnip} $hhh."
-       postmsg "$jlogfile" "$msg"
        set +x
-       echo "--- probab_out not gerenerated for ${nnip} $hhh --- "
+       echo '******************************************************* '
+       echo "*** probab_out not gerenerated for ${nnip} $hhh     *** "
+       echo '******************************************************* '
        [[ "$LOUD" = YES ]] && set -x
        echo "probab_out not gerenerated for ${nnip} $hhh" >> $wave_log
-       err=1;export err;err_chk
+       msg="ABNORMAL EXIT: ERR probab_out not gerenerated for ${nnip} $hhh."
+       postmsg "$jlogfile" "$msg"
+       err=5;export $err;${errchk} || exit ${err}
      else
        mv -f probab_out  ${nnip}_probab.$hhh.grib2
      fi

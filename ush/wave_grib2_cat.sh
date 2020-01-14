@@ -12,7 +12,7 @@
 #                                                                July, 2007   #
 # Update log                                                                  #
 # Nov2019 JHAlves - Merging wave scripts to global workflow                   #
-#                                                                             #
+# Jan2020 RPadilla, JHAlves  - Adding error checking                          #
 #                                                                             #
 ###############################################################################
 
@@ -43,13 +43,15 @@
   then
     set +x
     echo ' '
-    echo '******************************************************************************* '
-    echo '*** FATAL ERROR : ERROR IN multiwavegrib2_cat (COULD NOT CREATE TEMP DIRECTORY) *** '
-    echo '******************************************************************************* '
+    echo '***************************************************************************** '
+    echo '*** FATAL ERROR : IN multiwavegrib2_cat (COULD NOT CREATE TEMP DIRECTORY) *** '
+    echo '***************************************************************************** '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : ERROR IN multiwavegrib2_cat (Could not create temp directory)"
-    exit 1
+    echo "ERROR : IN multiwavegrib2_cat (COULD NOT CREATE TEMP DIRECTORY) " >> $wavelog
+    msg="FATAL ERROR : ERROR IN multiwavegrib2_cat (Could not create temp directory)"
+    postmsg "$jlogfile" "$msg"
+    err=1;export $err;${errchk} || exit ${err}
   fi
 
   cd grib_$grdID
@@ -82,8 +84,10 @@
     echo '***************************************************'
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "EXPORTED VARIABLES IN postprocessor NOT SET"
-    exit 1
+    echo " EXPORTED VARIABLES IN postprocessor NOT SET" >> $wavelog
+    msg="EXPORTED VARIABLES IN postprocessor NOT SET"
+    postmsg "$jlogfile" "$msg"
+    err=2;export $err;${errchk} || exit ${err}
   fi
 
 # 0.c Starting time for output
@@ -119,12 +123,14 @@
     set +x
     echo ' '
     echo '************************************************* '
-    echo '*** FATAL ERROR : ERROR IN multiwavegrib2_cat *** '
+    echo '*** FATAL ERROR : ERROR  Generating GRIB file *** '
     echo '************************************************* '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : ERROR IN multiwavegrib2_cat"
-    exit 3
+    echo "FATAL ERROR : ERROR  Generating GRIB file " >> $wavelog
+    msg="FATAL ERROR : ERROR IN multiwavegrib2_cat"
+    postmsg "$jlogfile" "$msg"
+    err=3;export $err;${errchk} || exit ${err}
   fi
 
 # 1.e Save in /com
@@ -147,8 +153,10 @@
       echo " Error in moving grib file $WAV_MOD_TAG.$grdID.$cycle.grib2 to com"
       echo ' '
       [[ "$LOUD" = YES ]] && set -x
-      postmsg "$jlogfile" "FATAL ERROR : ERROR IN multiwavegrib2"
-      exit 4
+      echo " FATAL ERROR : ERROR IN multiwavegrib2 moving grib file" >> $wavelog
+      msg="FATAL ERROR : moving $WAV_MOD_TAG.$grdID.$cycle.grib2 to com"
+      postmsg "$jlogfile" "$msg"
+      err=4;export $err;${errchk} || exit ${err}
     fi
 
     echo "   Creating wgrib index of $COMOUT/gridded/$WAV_MOD_TAG.$grdID.$cycle.grib2"

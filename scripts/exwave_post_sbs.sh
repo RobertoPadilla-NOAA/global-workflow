@@ -30,6 +30,7 @@
 # Apr2019 JHAlves - Transitioning to GEFS workflow                            #
 # Nov2019 JHAlves - Merging wave scripts to global workflow                   #
 # Dec2019 JHAlves - Creating side-by-side version                             #
+# Jan2020 RPadilla, JHAlves  - Adding error checking                          #
 #                                                                             #
 ###############################################################################
 # --------------------------------------------------------------------------- #
@@ -64,8 +65,7 @@
   if [ -z ${NTASKS} ]        
   then
     echo "FATAL ERROR: requires NTASKS to be set "
-    err=1; export err;${errchk}
-    exit $err
+    err=1; export err;${errchk} || exit $err
   fi
 
 # 0.c Defining model grids
@@ -165,8 +165,7 @@
       echo "$WAV_MOD_TAG post $grdID $date $cycle : mod_def file missing." >> $wavelog
       postmsg "$jlogfile" "FATAL ERROR : NO MOD_DEF file mod_def.$grdID"
       fieldOK='no'
-      err=2; export err;${errchk}
-      exit $err
+      err=2; export err;${errchk} || exit $err
       gribOK='no'
     else
       set +x
@@ -203,8 +202,7 @@
     [[ "$LOUD" = YES ]] && set -x
     echo "$WAV_MOD_ID post $date $cycle : buoy location file missing." >> $wavelog
     postmsg "$jlogfile" "FATAL ERROR : NO BUOY LOCATION FILE"
-    err=5; export err;${errchk}
-    exit $err
+    err=3; export err;${errchk} || exit $err
     pointOK='no'
     specOK='no'
     bullOK='no'
@@ -376,7 +374,7 @@
       echo "$WAV_MOD_TAG post $date $cycle : buoy log file failed to be created." >> $wavelog
       echo $msg
       [[ "$LOUD" = YES ]] && set -x
-      err=6;export err;${errchk}
+      err=4;export err;${errchk} || exit $err
       specOK='no'
       bullOK='no'
       exit $err
@@ -411,7 +409,7 @@
       [[ "$LOUD" = YES ]] && set -x
       echo "$WAV_MOD_TAG post $date $cycle : buoy log file missing." >> $wavelog
       postmsg "$jlogfile" "FATAL ERROR : NO BUOY LOG FILE GENERATED FOR SPEC AND BULLETIN FILES"
-      err=7;export err;${errchk}
+      err=5;export err;${errchk} || exit $err
       specOK='no'
       bullOK='no'
       OspecOK='no'
@@ -486,8 +484,7 @@
       [[ "$LOUD" = YES ]] && set -x
       echo "$WAV_MOD_TAG post $uoutpGRD $date $cycle : point output missing." >> $wavelog
       postmsg "$jlogfile" "FATAL ERROR : NO RAW POINT OUTPUT FILE out_pnt.$uoutpGRD
-      err=8; export err;${errchk}
-      exit $err
+      err=6; export err;${errchk} || exit $err
     fi
 #    echo "cp -f ${pfile} ./out_pnt.${uoutpGRD} > cpoutp_$uoutpGRD.out 2>&1" >> ${fcmdnow}
     cp -f ${pfile} ./out_pnt.${uoutpGRD} > cpoutp_$uoutpGRD.out 2>&1
@@ -503,8 +500,7 @@
         echo "$WAV_MOD_TAG post $grdID $date $cycle : field output missing." >> $wavelog
         postmsg "$jlogfile" "NON-FATAL ERROR : NO RAW FIELD OUTPUT FILE out_grd.$grdID"
         fieldOK='no'
-        err=9; export err;${errchk}
-        exit $err
+        err=7; export err;${errchk} || exit $err
       fi
 #      echo "cp -f ${gfile} ./out_grd.${wavGRD} > cpoutg_$wavGRD.out 2>&1" >> ${fcmdnow}
       cp -f ${gfile} ./out_grd.${wavGRD} > cpoutg_$wavGRD.out 2>&1
@@ -772,8 +768,7 @@ exit
     echo '***********************************************************'
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    err=10;export err;${errchk}
-    exit $err
+    err=8;export err;${errchk} || exit $err
   fi
 
 # --------------------------------------------------------------------------- #
@@ -796,7 +791,7 @@ exit
         echo "      Error in GRID interpolation for $grdID."
         [[ "$LOUD" = YES ]] && set -x
         postmsg "$jlogfile" "NON-FATAL ERROR in GRID interpolation for $grdID."
-        exit_code=6
+        exit_code=5
         mv -f grint_$grdID.out grint_$grdID.err 
       else
         set +x
@@ -810,7 +805,7 @@ exit
         echo "      Error in GRIB encoding for $grdID."
         [[ "$LOUD" = YES ]] && set -x
         postmsg "$jlogfile" "NON-FATAL ERROR in GRIB encoding for $grdID."
-        exit_code=7
+        exit_code=6
         mv -f grib_$grdID.out grib_$grdID.err 
       else
         set +x
@@ -832,7 +827,7 @@ exit
         echo "      Error in GRIB encoding for $grdID."
         [[ "$LOUD" = YES ]] && set -x
         postmsg "$jlogfile" "NON-FATAL ERROR in GRIB encoding for $grdID."
-        exit_code=8
+        exit_code=7
         mv -f grib_$grdID.out grib_$grdID.err
       else
         set +x
@@ -856,7 +851,7 @@ exit
         then
           specstring='Error in spectra.'
           postmsg "$jlogfile" "NON-FATAL ERROR in spectra."
-          exit_code=9
+          exit_code=8
           mv -f spec_$buoy.out spec_$buoy.err
         fi
       done
@@ -875,7 +870,7 @@ exit
         then
           specstring='Error in spectra.'
           postmsg "$jlogfile" "NON-FATAL ERROR in spectra."
-          exit_code=10
+          exit_code=9
           mv -f bull_$buoy.out bull_$buoy.err
         fi
       done
@@ -901,7 +896,7 @@ exit
         [[ "$LOUD" = YES ]] && set -x
         echo "$WAV_MOD_TAG post $date $cycle : error in GRIB." >> $wavelog
         postmsg "$jlogfile" "NON-FATAL ERROR in wave_grib2.sh"
-        err=11;export err;${errchk}
+        err=9;export err;${errchk} || exit $err
         sed "s/^/grib_$grdID.err : /g"  grib_$grdID.err
       fi
 
@@ -918,7 +913,7 @@ exit
       [[ "$LOUD" = YES ]] && set -x
       echo "$WAV_MOD_TAG post $date $cycle : error in spectra." >> $wavelog
       postmsg "$jlogfile" "NON-FATAL ERROR in wave_outp.sh, possibly in multiple calls."
-      err=12;export err;${errchk}
+      err=10;export err;${errchk} || exit $err
       for file in spec_*.err
       do
         echo ' '
@@ -938,7 +933,7 @@ exit
       [[ "$LOUD" = YES ]] && set -x
       echo "$WAV_MOD_TAG post $date $cycle : error in bulletins." >> $wavelog
       postmsg "$jlogfile" "NON-FATAL ERROR in wave_bull.sh, possibly in multiple calls."
-      err=13;export err;${errchk}
+      err=11;export err;${errchk} || exit $err
       for file in bull_*.err
       do
         echo ' '
@@ -1026,8 +1021,7 @@ exit
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
     exit_code=$exit
-    err=14; export err;${errchk}
-    exit $err
+    err=12; export err;${errchk} || exit $err
   fi
 
 
@@ -1049,7 +1043,7 @@ exit
       [[ "$LOUD" = YES ]] && set -x
       echo "$WAV_MOD_TAG post $date $cycle : error in spectral tar." >> $wavelog
       postmsg "$jlogfile" "NON-FATAL ERROR in $WAV_MOD_TAG spectral tar file."
-      exit_code=11
+      exit_code=10
       mv ${WAV_MOD_TAG}_spec_tar.out ${WAV_MOD_TAG}_spec_tar.err
     else
       set +x
@@ -1069,7 +1063,7 @@ exit
       [[ "$LOUD" = YES ]] && set -x
       echo "$WAV_MOD_TAG post $date $cycle : error in bulletin tar." >> $wavelog
       postmsg "$jlogfile" "NON-FATAL ERROR in $WAV_MOD_TAG bulletin tar file."
-      exit_code=12
+      exit_code=11
       mv -f ${WAV_MOD_TAG}_bull_tar.out ${WAV_MOD_TAG}_bull_tar.err
     else
       set +x
@@ -1084,7 +1078,7 @@ exit
       [[ "$LOUD" = YES ]] && set -x
       echo "$WAV_MOD_TAG post $date $cycle : error in compressed bulletin tar." >> $wavelog
       postmsg "$jlogfile" "NON-FATAL ERROR in $WAV_MOD_TAG compressed bulletin tar file."
-      exit_code=13
+      exit_code=12
       mv -f ${WAV_MOD_TAG}_cbull_tar.out ${WAV_MOD_TAG}_cbull_tar.err
     else
       set +x
@@ -1110,7 +1104,7 @@ exit
       echo ' '
       sed "s/^/$file : /g" $file
     done
-    err=15;export err;${errchk}
+    err=13;export err;${errchk} || exit $err
   fi
 
 # --------------------------------------------------------------------------- #
@@ -1143,8 +1137,7 @@ exit
     msg="ABNORMAL EXIT: Problem in MWW3 POST"
     postmsg "$jlogfile" "$msg"
     echo $msg
-    err=16; export err;${errchk}
-    exit $err
+    err=14; export err;${errchk} || exit $err
   else
     echo " Wave Post Completed Normally "
     msg="$job completed normally"

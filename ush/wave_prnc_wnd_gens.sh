@@ -19,6 +19,7 @@
 #                                                                             #
 # Update log                                                                  #
 # Nov2019 JHAlves - Merging wave scripts to global workflow                   #
+# Jan2020 RPadilla, JHAlves  - Adding error checking                          #
 #                                                                             #
 ###############################################################################
 #
@@ -42,8 +43,24 @@
 
   rm -rf wind_${memb}
   mkdir wind_${memb}
+  err=$?
+  if [ "$err" != '0' ]
+  then
+    set +x
+    echo ' '
+    echo '*********************************************************************************** '
+    echo '*** FATAL ERROR : ERROR IN wave_prnc_wnd_gens COULD NOT CREATE wind_${memb} Dir *** '
+    echo '*********************************************************************************** '
+    echo ' '
+    [[ "$LOUD" = YES ]] && set -x
+    echo " ERROR IN wave_prnc_wnd_gens COULD NOT CREATE wind_${memb} Dir" >> $wavelog
+    msg="FATAL ERROR : ERROR IN wave_prnc_wnd_gens (Could not create ice directory)"
+    postmsg "$jlogfile" "$msg"
+    err=1;export err;${errchk} || exit ${err}
+  fi
+
   cd wind_${memb}
-  ln -s ../postmsg .
+  ln -s postmsg .
 
 
 # 0.b Define directories and the search path.
@@ -69,13 +86,15 @@
   then
     set +x
     echo ' '
-    echo '**************************************************'
-    echo '*** EXPORTED VARIABLES IN preprocessor NOT SET ***'
-    echo '**************************************************'
+    echo '********************************************************'
+    echo '*** EXPORTED VARIABLES IN wave_prnc_wnd_gens NOT SET ***'
+    echo '********************************************************'
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "NON-FATAL ERROR - EXPORTED VARIABLES IN preprocessor NOT SET"
-    exit 0
+    echo " EXPORTED VARIABLES IN wave_prnc_wnd_gens NOT SET" >> $wavelog
+    msg="ERROR - EXPORTED VARIABLES IN  wave_prnc_wnd_gens NOT SET"
+    postmsg "$jlogfile" "$msg"
+    err=2;export err;${errchk} || exit ${err}
   fi
 
 # 0.c Links to working directory
@@ -155,7 +174,7 @@
        then
          /nwprod/util/exec/copygb2 \
        -xg'0 6 0 0 0 0 0 0 720 361 0 0 90000000 0 48 -90000000 359500000 500000 500000 0' \
-        $COMINENS/$wndIE.$cycle.$sfHH wind.grib
+         $COMINENS/$wndIE.$cycle.$sfHH wind.grib
        else
          cp  $COMINENS/$wndIE.$cycle.$sfHH  wind.grib
        fi
@@ -166,16 +185,18 @@
        [[ "$LOUD" = YES ]] && set -x
      else
        msg="ABNORMAL EXIT: ERR in coping $wndIE file"
-       ./postmsg "$jlogfile" "$msg"
+       postmsg "$jlogfile" "$msg"
        set +x
        echo ' '
-       echo '***************************************** '
-       echo "*** ERR : No $COMINENS/$wndIE.$cycle.$sfHH file *** "
-       echo '***************************************** '
+       echo '***************************************************** '
+       echo "*** ERROR : No $COMINENS/$wndIE.$cycle.$sfHH file *** "
+       echo '***************************************************** '
        echo ' '
        [[ "$LOUD" = YES ]] && set -x
        echo "No $COMINEBC/$wndIE.$cycle.$sfHH " >> $wavelog
-       exit 1
+       msg="ERROR - No $COMINENS/$wndIE.$cycle.$sfHH file"
+       postmsg "$jlogfile" "$msg"
+       err=3;export err;${errchk} || exit ${err}
      fi
 
 # 1.b Extract input data from grib files
@@ -227,8 +248,6 @@
 
      if [ "$err" != '0' ]
      then
-       msg="ABNORMAL EXIT: ERROR IN ${WAV_MOD_ID}gfs"
-       ../postmsg "$jlogfile" "$msg"
        set +x
        echo ' '
        echo '****************************************** '
@@ -237,13 +256,13 @@
        echo ' '
        [[ "$LOUD" = YES ]] && set -x
        echo "$modIE prep $ymd $cycle : error in ${WAV_MOD_ID}gfs." >> $wavelog
-       exit 2
+       msg="ABNORMAL EXIT: ERROR IN ${WAV_MOD_ID}gfs"
+       postmsg "$jlogfile" "$msg"
+       err=4;export err;${errchk} || exit ${err}
      fi
 #
      if [ ! -f gfs.wind ]
      then
-       msg="ABNORMAL EXIT: FILE gfs.wind MISSING"
-       ../postmsg "$jlogfile" "$msg"
        set +x
        echo ' '
        cat ${WAV_MOD_ID}gfs.out
@@ -252,9 +271,12 @@
        echo '*** FATAL ERROR : gfs.wind NOT FOUND ***'
        echo '****************************************'
        echo ' '
-       echo "$modIE prep $ymd $cycle : gfs.wind missing." >> $wavelog
+
        [[ "$LOUD" = YES ]] && set -x
-       exit 3
+       echo "$modIE prep $ymd $cycle : gfs.wind missing." >> $wavelog
+       msg="ABNORMAL EXIT: FILE gfs.wind MISSING"
+       postmsg "$jlogfile" "$msg"
+       err=5;export err;${errchk} || exit ${err}
      fi
 #
   if [ "${modIE}" == "gwes00" ]
@@ -284,8 +306,6 @@
 
   if [ "$err" != '0' ]
   then
-    msg="ABNORMAL EXIT: ERROR IN waveprep"
-    ../postmsg "$jlogfile" "$msg"
     set +x
     echo ' '
     echo '*************************************** '
@@ -294,13 +314,13 @@
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
     echo "$modIE prep $ymd $cycle : error in waveprepens." >> $wavelog
-    exit 4
+    msg="ABNORMAL EXIT: ERROR IN waveprep"
+    postmsg "$jlogfile" "$msg"
+    err=6;export err;${errchk} || exit ${err}
   fi
 #
   if [ ! -f wind.ww3 ]
   then
-    msg="ABNORMAL EXIT: FILE wind.ww3 MISSING"
-    ../postmsg "$jlogfile" "$msg"
     set +x
     echo ' '
     cat waveprep.out
@@ -311,7 +331,9 @@
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
     echo "$modIE prep $ymd $cycle : wind.ww3 missing." >> $wavelog
-    exit 5
+    msg="ABNORMAL EXIT: FILE wind.ww3 MISSING"
+    postmsg "$jlogfile" "$msg"
+    err=7;export err;${errchk} || exit ${err}
   fi
 
 # --------------------------------------------------------------------------- #

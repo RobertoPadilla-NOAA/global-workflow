@@ -1,5 +1,9 @@
 #!/bin/sh
-
+###############################################################################
+# .                                                                           #
+# Jan2020 RPadilla, JHAlves  - Adding error checking                          #
+#                                                                             #
+###############################################################################
 set -x
 
 ymdh_rtofs=$1
@@ -19,15 +23,6 @@ fi
 
 fhr=`printf "%03d\n" ${fhr}`
 
-#module unload EnvVars NetCDF
-#module load EnvVars/1.0.0 NetCDF/3.6.3 CDO/v1.5.0 
-#module load nco
-
-#CDO=/nwprod2/rtofs_shared/rtofs_cdo.v1.5.0/bin/cdo
-
-#FIXwave=/marine/noscrub/wavepa/MULTI_1_CURR_Q1FY18/RTOFS_REALTIME/fix
-#EXECcode=/marine/save/wavepa/svn/wave_code_git.v6/st4nc/exec
-
 curfile=rtofs_glo_2ds_${fext}${fhr}_3hrly_prog.nc
 
 echo "FILE: $COMINcur/rtofs.${PDY}/$curfile"
@@ -36,6 +31,22 @@ if [ -s ${COMINcur}/rtofs.${PDY}/${curfile} ]
 then
 
   mkdir -p rtofs_${fext}${fhr}
+  err=$?
+  if [ "$err" != '0' ]
+  then
+    set +x
+    echo ' '
+    echo '************************************************************************************* '
+    echo '*** FATAL ERROR : ERROR IN wave_prnc_cur COULD NOT CREATE  rtofs_${fext}${fhr} Dir*** '
+    echo '************************************************************************************* '
+    echo ' '
+    [[ "$LOUD" = YES ]] && set -x
+    echo " ERROR IN wave_prnc_cur COULD NOT CREATE  rtofs_${fext}${fhr} Dir" >> $wavelog
+    msg="FATAL ERROR : ERROR IN ww3_outp_spec (Could not create temp directory)"
+    postmsg "$jlogfile" "$msg"
+    err=1;export err;${errchk} || exit ${err}
+  fi
+
   cd rtofs_${fext}${fhr}
 
   ncks -x -v sst,sss,layer_density  ${COMINcur}/rtofs.${PDY}/rtofs_glo_2ds_${fext}${fhr}_3hrly_prog.nc rtofs_glo_uv_${PDY}_${fext}${fhr}.nc
@@ -78,7 +89,22 @@ then
   ln -s ${DATA}/mod_def.rtofs_5m ./mod_def.ww3
 
   $EXECcode/ww3_prnc
+  err=$?
 
+  if [ "$err" != '0' ]
+  then
+    set +x
+    echo ' '
+    echo '*********************************************************************** '
+    echo '*** FATAL ERROR : ERROR IN wave_prnc_cur running $EXECwave/ww3_prnc *** '
+    echo '*********************************************************************** '
+    echo ' '
+    [[ "$LOUD" = YES ]] && set -x
+    echo "ERROR IN wave_prnc_cur running $EXECwave/ww3_prnc " >> $wavelog
+    msg="FATAL ERROR : In wave_prnc_cur running $EXECwave/ww3_prnc"
+    postmsg "$jlogfile" 
+    err=2;export err;${errchk} || exit ${err}
+  fi
   mv -f current.ww3 ${DATA}/rtofs.${ymdh_rtofs}
 
   cd ${DATA}
@@ -93,8 +119,11 @@ else
   echo '************************************** '
   echo ' '
   set $seton
-  postmsg "$jlogfile" "FATAL ERROR - NO CURRENT FILE (RTOFS)"
-  exit 0
+  [[ "$LOUD" = YES ]] && set -x
+  echo " FATAL ERROR: NO CUR FILE $curfile" >> $wavelog
+  msg="FATAL ERROR - NO CURRENT FILE (RTOFS)"
+  postmsg "$jlogfile" "$msg"
+  err=3;export err;${errchk} || exit ${err}
   echo ' '
 
 fi

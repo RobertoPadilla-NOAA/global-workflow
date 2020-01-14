@@ -19,6 +19,7 @@
 #                                                                             #
 # Update log                                                                  #
 # Nov2019 JHAlves - Merging wave scripts to global workflow                   #
+# Jan2020 RPadilla, HAlves  - Adding error checking                           #
 #                                                                             #
 ###############################################################################
 #
@@ -33,6 +34,22 @@
 
   rm -rf ice
   mkdir ice
+  err=$?
+  if [ "$err" != '0' ]
+  then
+    set +x
+    echo ' '
+    echo '********************************************************************** '
+    echo '*** FATAL ERROR : ERROR IN wave_prnc_ice COULD NOT CREATE  ice Dir *** '
+    echo '********************************************************************** '
+    echo ' '
+    [[ "$LOUD" = YES ]] && set -x
+    echo " ERROR IN wave_prnc_ice COULD NOT CREATE  rtofs_${fext}${fhr} Dir" >> $wavelog
+    msg="FATAL ERROR : ERROR IN ww3_outp_spec (Could not create temp directory)"
+    postmsg "$jlogfile" "$msg"
+    err=1;export err;${errchk} || exit ${err}
+  fi
+
   cd ice
   ln -s ${DATA}/postmsg .
 
@@ -59,12 +76,14 @@
     set $setoff
     echo ' '
     echo '**************************************************'
-    echo '*** EXPORTED VARIABLES IN preprocessor NOT SET ***'
+    echo '*** EXPORTED VARIABLES IN wave_prnc_ice NOT SET ***'
     echo '**************************************************'
     echo ' '
-    exit 0
     set $seton
-    postmsg "$jlogfile" "NON-FATAL ERROR - EXPORTED VARIABLES IN preprocessor NOT SET"
+    echo " EXPORTED VARIABLES IN wave_prnc_ice NOT SET " >> $wavelog
+    msg="NON-FATAL ERROR - EXPORTED VARIABLES IN wave_prnc_ice NOT SET"
+    postmsg "$jlogfile" "$msg"
+    err=2;export err;${errchk} || exit ${err}
   fi
 
 # 0.c Links to working directory
@@ -89,6 +108,10 @@
   if [ -f $file ]
   then
     cp $file ice.grib
+  else
+
+
+
   fi
 
   if [ -f ice.grib ]
@@ -103,9 +126,11 @@
     echo "*** FATAL ERROR: NO ICE FILE $file ***  "
     echo '************************************** '
     echo ' '
-    set $seton
-    postmsg "$jlogfile" "FATAL ERROR - NO ICE FILE (GFS GRIB)"
-    exit 0
+    [[ "$LOUD" = YES ]] && set -x
+    echo " FATAL ERROR: NO ICE FILE $file" >> $wavelog
+    msg="FATAL ERROR : ERROR NO ICE FILE (GFS GRIB) "
+    postmsg "$jlogfile" 
+    err=3;export err;${errchk} || exit ${err}
   fi
 
 # --------------------------------------------------------------------------- #
@@ -134,8 +159,10 @@
     echo '********************************************** '
     echo ' '
     set $seton
-    postmsg "$jlogfile" "NON-FATAL ERROR - ICE FIELD WITH UNEXPECTED DATE"
-    exit 0
+    echo "ERROR : ICE FIELD WITH UNEXPECTED DATE  " >> $wavelog
+    msg="NON-FATAL ERROR - ICE FIELD WITH UNEXPECTED DATE"
+    postmsg "$jlogfile" "$msg"
+    err=4;export err;${errchk} || exit ${err}
   fi
 
 # 2.c Unpack data
@@ -159,9 +186,11 @@
     echo '*** ERROR IN UNPACKING GRIB ICE FILE *** '
     echo '**************************************** '
     echo ' '
-    set $seton
-    postmsg "$jlogfile" "ERROR IN UNPACKING GRIB ICE FILE."
-    exit 0
+    set $seton 
+    echo "ERROR IN UNPACKING GRIB ICE FILE " >> $wavelog
+    msg="ERROR IN UNPACKING GRIB ICE FILE."
+    postmsg "$jlogfile" "$msg"
+    err=5;export err;${errchk} || exit ${err}
   fi
 
   rm -f wgrib.out
@@ -186,13 +215,15 @@
     cat wave_prep.out
     set $setoff
     echo ' '
-    echo '************************* '
-    echo '*** ERROR IN waveprep *** '
-    echo '************************* '
+    echo '*************************************** '
+    echo '*** ERROR IN $EXECcode/ww3_prnc_ice *** '
+    echo '*************************************** '
     echo ' '
     set $seton
-    postmsg "$jlogfile" "NON-FATAL ERROR IN waveprep."
-    exit 0
+    echo "ERROR IN $EXECcode/ww3_prnc_ice " >> $wavelog
+    msg="ERROR RUNNING $EXECcode/ww3_prnc"
+    postmsg "$jlogfile" "$msg"
+    err=6;export err;${errchk} || exit ${err}
   fi
 
   rm -f wave_prep.out ww3_prep.inp ice.raw mod_def.ww3
@@ -214,6 +245,23 @@
   set $setoff
   echo "   Saving ice.ww3 as $COMOUT/rundata/${icefile}"
   set $seton
+  if [ ! -f ice.ww3 ]
+  then
+    set +x
+    echo ' '
+    cat waveprep.out
+    echo ' '
+    echo '****************************************'
+    echo '*** FATAL ERROR : ice.ww3 NOT FOUND ***'
+    echo '****************************************'
+    echo ' '
+    [[ "$LOUD" = YES ]] && set -x
+    echo " FATAL ERROR : ice.ww3 NOT FOUND" >> $wavelog
+    msg="ABNORMAL EXIT: FILE ice.ww3 MISSING"
+    postmsg "$jlogfile" "$msg"
+    err=7;export err;${errchk} || exit ${err}
+  fi
+
   cp ice.ww3 $COMOUT/rundata/${icefile}
   rm -f ice.ww3
 

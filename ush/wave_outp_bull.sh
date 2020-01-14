@@ -20,6 +20,7 @@
 #                                                                Jan  2011    #
 # Update log                                                                  #
 # Nov2019 JHAlves - Merging wave scripts to global workflow                   #
+# Jan2020 RPadilla, JHAlves  - Adding error checking                          #
 #                                                                             #
 ###############################################################################
 #
@@ -45,12 +46,14 @@
     set +x
     echo ' '
     echo '************************************************************************************ '
-    echo '*** FATAL ERROR : ERROR IN ww3_spec_bull (COULD NOT CREATE TEMP DIRECTORY) *** '
+    echo '*** FATAL ERROR : ERROR IN ww3_outp_bull (COULD NOT CREATE TEMP DIRECTORY) *** '
     echo '************************************************************************************ '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : ERROR IN ww3_spec_bull (Could not create temp directory)"
-    exit 1
+    echo "FATAL ERROR IN ww3_outp_bull (COULD NOT CREATE TEMP DIRECTORY) " >> $wavelog
+    msg="FATAL ERROR : ERROR IN ww3_outp_bull (Could not create temp directory)"
+    postmsg "$jlogfile" "$msg"
+    err=1;export err;${errchk} || exit ${err}
   fi
 
   cd bull_$1
@@ -71,12 +74,14 @@
     set +x
     echo ' '
     echo '****************************************************'
-    echo '*** LOCATION ID IN ww3_spec_bull.sh NOT SET ***'
+    echo '*** LOCATION ID IN ww3_outp_bull.sh NOT SET ***'
     echo '****************************************************'
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "Error LOCATION ID IN ww3_spec_bull.sh NOT SET"
-    exit 1
+    echo " LOCATION ID IN ww3_outp_bull.sh NOT SET " >> $wavelog
+    msg="Error LOCATION ID IN ww3_out_bull.sh NOT SET"
+    postmsg "$jlogfile" "$msg" 
+    err=2;export err;${errchk} || exit ${err}
   else
     buoy=$1
     grep $buoy ${DATA}/buoy_log.ww3 > tmp_list.loc
@@ -88,7 +93,7 @@
         point=`echo $line | awk '{ print $1 }'`
         set +x
         echo "              Location ID/#   : $buoy (${point})"
-        echo "   Spectral output start time : $ymdh "
+        echo "   Bulletin output start time : $ymdh "
         echo ' '
         [[ "$LOUD" = YES ]] && set -x
         break
@@ -97,13 +102,15 @@
     if [ -z "$point" ]
     then
       set +x
-      echo '***********************************************************'
-      echo '*** LOCATION ID IN ww3_spec_bull.sh NOT RECOGNIZED ***'
-      echo '***********************************************************'
+      echo '******************************************************************* '
+      echo '*** FATAL ERROR: LOCATION ID IN ww3_outp_bull.sh NOT RECOGNIZED *** '
+      echo '******************************************************************* '
       echo ' '
       [[ "$LOUD" = YES ]] && set -x
-      postmsg "$jlogfile" "Error LOCATION ID IN ww3_spec_bull.sh NOT RECOGNIZED"
-      exit 2
+      echo " ERROR: LOCATION ID IN ww3_outp_bull.sh NOT RECOGNIZED " >> $wavelog
+      msg="ERROR: LOCATION ID IN ww3_outp_bull.sh NOT RECOGNIZED"
+      postmsg "$jlogfile" 
+      err=3;export err;${errchk} || exit ${err}
     fi
   fi
 
@@ -116,13 +123,14 @@
   then
     set +x
     echo ' '
-    echo '***********************************************************'
-    echo '*** EXPORTED VARIABLES IN ww3_spec_bull.sh NOT SET ***'
-    echo '***********************************************************'
+    echo '************************************************************* '
+    echo '*** ERROR: EXPORTED VARIABLES IN ww3_out_bull.sh NOT SET *** '
+    echo '************************************************************* '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "Error EXPORTED VARIABLES IN ww3_spec_bull.sh NOT SET"
-    exit 3
+    echo "ERROR: EXPORTED VARIABLES IN ww3_out_bull.sh NOT SET " >> $wavelog
+    postmsg "$jlogfile" "Error EXPORTED VARIABLES IN ww3_outp_bull.sh NOT SET"
+    err=4;export err;${errchk} || exit ${err}
   fi
 
 # 0.d Starting time for output
@@ -173,13 +181,15 @@
   then
     set +x
     echo ' '
-    echo '******************************************** '
-    echo '*** FATAL ERROR : ERROR IN ww3_outp *** '
-    echo '******************************************** '
+    echo '*************************************************************** '
+    echo '*** FATAL ERROR : ERROR IN wave_outp_bull, running ww3_outp *** '
+    echo '*************************************************************** '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : ERROR IN ww3_outp."
-    exit 4
+    echo " FATAL ERROR : In wave_outp_bull, running ww3_outp" >> $wavelog
+    msg="FATAL ERROR : ERROR IN wave_outp_bull, running ww3_outp"
+    postmsg "$jlogfile" "$msg"
+    err=5;export err;${errchk} || exit ${err}
   fi
 
   if [ -f $buoy.bull ] && [ -f $buoy.cbull ]
@@ -194,8 +204,10 @@
     echo '********************************************* '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : BULLETIN FILE NOT FOUND"
-    exit 7
+    echo "FATAL ERROR : BULLETIN FILE NOT FOUND " >> $wavelog
+    msg="FATAL ERROR : BULLETIN FILE NOT FOUND"
+    postmsg "$jlogfile" "$msg"
+    err=6;export err;${errchk} || exit ${err}
   fi
 
   for ext in bull cbull 
@@ -204,14 +216,15 @@
     then
       set +x
       echo ' '
-      echo'*******************************************************' 
+      echo '*******************************************************' 
       echo '*** FATAL ERROR : BULLETIN FILE NOT MOVED PROPERLY ***'
-      echo'*******************************************************' 
+      echo '*******************************************************' 
       echo ' '
       echo " file $WAV_MOD_TAG.$buoy.$ext not found in ${STA_DIR}/${ext}/ directory!!"
       [[ "$LOUD" = YES ]] && set -x
+      echo " FATAL ERROR : BULLETIN FILE NOT MOVED PROPERLY " >> $wavelog
       postmsg "$jlogfile" "FATAL ERROR : BULLETIN FILE $WAV_MOD_TAG.$buoy.$ext NOT FOUND"
-      exit 8
+      err=7;export err;${errchk} || exit ${err}
     fi
   done
 

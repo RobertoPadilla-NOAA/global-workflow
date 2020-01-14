@@ -18,6 +18,7 @@
 #                                                            March 12, 2007   #
 # Update log                                                                  #
 # Nov2019 JHAlves - Merging wave scripts to global workflow                   #
+# Jan2020 RPadilla, JHAlves  - Adding error checking                          #
 #                                                                             #
 ###############################################################################
 #
@@ -47,8 +48,10 @@
     echo '****************************************************************************** '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : ERROR IN ww3_outp_spec (Could not create temp directory)"
-    exit 1
+    echo " FATAL ERROR : In ww3_outp_spec (COULD NOT CREATE TEMP DIRECTORY) " >> $wavelog
+    msg="FATAL ERROR : In ww3_outp_spec (Could not create temp directory)"
+    postmsg "$jlogfile" "$msg"
+    err=1;export err;${errchk} || exit ${err}
   fi
 
   cd spec_$1
@@ -73,8 +76,9 @@
     echo '***********************************************'
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
+    echo " LOCATION ID IN ww3_outp_spec.sh NOT SET" >> $wavelog
     postmsg "$jlogfile" "LOCATION ID IN ww3_outp_spec.sh NOT SET"
-    exit 1
+    err=2;export err;${errchk} || exit ${err}
   else
     buoy=$1
     grep $buoy ${DATA}/buoy_log.ww3 > tmp_list.loc
@@ -100,8 +104,9 @@
       echo '******************************************************'
       echo ' '
       [[ "$LOUD" = YES ]] && set -x
+      echo "LOCATION ID IN ww3_outp_spec.sh NOT RECOGNIZED " >> $wavelog
       postmsg "$jlogfile" "LOCATION ID IN ww3_outp_spec.sh NOT RECOGNIZED"
-      exit 2
+      err=3;export err;${errchk} || exit ${err}
     fi
   fi
 
@@ -119,8 +124,10 @@
     echo '******************************************************'
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "EXPORTED VARIABLES IN ww3_outp_spec.sh NOT SET"
-    exit 3
+    echo " EXPORTED VARIABLES IN ww3_outp_spec.sh NOT SET" >> $wavelog
+    msg="EXPORTED VARIABLES IN ww3_outp_spec.sh NOT SET"
+    postmsg "$jlogfile" "$msg"
+    err=4;export err;${errchk} || exit ${err}
   fi
 
 # 0.d Starting time for output
@@ -171,13 +178,15 @@
   then
     set +x
     echo ' '
-    echo '******************************************** '
-    echo '*** FATAL ERROR : ERROR IN ww3_outp *** '
-    echo '******************************************** '
+    echo '*********************************************************************** '
+    echo '*** FATAL ERROR : ERROR IN ww3_outp_spec running $EXECwave/ww3_outp *** '
+    echo '*********************************************************************** '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : ERROR IN ww3_outp"
-    exit 4
+    echo " FATAL ERROR : In ww3_outp_spec running $EXECwave/ww3_outp" >> $wavelog
+    msg="FATAL ERROR : In ww3_outp_spec running $EXECwave/ww3_outp"
+    postmsg "$jlogfile" "$msg"
+    err=5;export err;${errchk} || exit ${err}
   fi
 
 # --------------------------------------------------------------------------- #
@@ -197,8 +206,10 @@
     echo '***************************************************************** '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : OUTPUT DATA FILE FOR BOUY $bouy NOT FOUND"
-    exit 5
+    echo "FATAL ERROR : OUTPUT DATA FILE FOR BOUY $bouy NOT FOUND " >> $wavelog
+    msg="FATAL ERROR : OUTPUT DATA FILE FOR BOUY $bouy NOT FOUND"
+    postmsg "$jlogfile" "$msg"
+    err=6;export err;${errchk} || exit ${err}
   fi
 
 # 3.b Clean up the rest

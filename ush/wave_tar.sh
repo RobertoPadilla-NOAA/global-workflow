@@ -17,6 +17,7 @@
 #                                                            March 13, 2007   #
 # Update log                                                                  #
 # Nov2019 JHAlves - Merging wave scripts to global workflow                   #
+# Jan2020 RPadilla, JHAlves  - Adding error checking                          #
 #                                                                             #
 ###############################################################################
 #
@@ -54,12 +55,14 @@
     set +x
     echo ' '
     echo '********************************************'
-    echo '*** VARIABLES IN ww3_tar.sh NOT SET ***'
+    echo '*** FATAL ERROR: TYPE IN ww3_tar.sh NOT SET     ***'
     echo '********************************************'
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "TYPE IN ww3_tar.sh NOT SET"
-    exit 1
+    echo "FATAL ERROR: TYPE IN ww3_tar.sh NOT SET " >> $wavelog
+    msg="TYPE in wave_tar.sh NOT SET"
+    postmsg "$jlogfile" "$msg" 
+    err=1;export err;${errchk} || exit ${err}
   else
     ID=$1
     type=$2
@@ -83,8 +86,10 @@
     echo '*****************************************************'
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "EXPORTED VARIABLES IN ww3_tar.sh NOT SET"
-    exit 2
+    echo " EXPORTED VARIABLES IN ww3_tar.sh NOT SET" >> $wavelog
+    msg="EXPORTED VARIABLES IN ww3_tar.sh NOT SET"
+    postmsg "$jlogfile" "$msg"
+    err=2;export err;${errchk} || exit ${err}
   fi
 
   cd ${STA_DIR}/${type}
@@ -121,8 +126,10 @@
         echo '***************************************** '
         echo ' '
         [[ "$LOUD" = YES ]] && set -x
-        postmsg "$jlogfile" "FATAL ERROR : TAR CREATION FAILED"
-        exit 3
+        echo "FATAL ERROR : TAR CREATION FAILED " >> $wavelog
+        msg="FATAL ERROR : TAR CREATION FAILED"
+        postmsg "$jlogfile" "$msg"
+        err=3;export err;${errchk} || exit ${err}
       fi
       
       if [ -f "$ID.$cycle.${type}_tar" ]
@@ -148,8 +155,10 @@
     echo '***************************************** '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : TAR CREATION FAILED"
-    exit 3
+    echo "FATAL ERROR : TAR CREATION FAILED " >> $wavelog
+    msg="FATAL ERROR : TAR CREATION FAILED"
+    postmsg "$jlogfile" "$msg"
+    err=4;export err;${errchk} || exit ${err}
   fi
 
   if [ "$type" = 'spec' ]
@@ -169,8 +178,10 @@
         echo '***************************************************** '
         echo ' '
         [[ "$LOUD" = YES ]] && set -x
-        postmsg "$jlogfile" "FATAL ERROR : SPECTRAL TAR COMPRESSION FAILED"
-        exit 4
+        echo "FATAL ERROR : SPECTRAL TAR COMPRESSION FAILED " >> $wavelog
+        msg="FATAL ERROR : SPECTRAL TAR COMPRESSION FAILED"
+        postmsg "$jlogfile" "$msg"
+        err=5;export err;${errchk} || exit ${err}
       fi
     fi
   else
@@ -200,8 +211,10 @@
       echo '************************************* '
       echo ' '
       [[ "$LOUD" = YES ]] && set -x
-      postmsg "$jlogfile" "FATAL ERROR : TAR COPY FAILED"
-      exit 4
+      echo "FATAL ERROR : TAR COPY FAILED " >> $wavelog
+      msg="FATAL ERROR : TAR COPY FAILED"
+      postmsg "$jlogfile" "$msg"
+      err=6;export err;${errchk} || exit ${err}
     fi
 
     if [ "$SENDDBN" = 'YES' ]

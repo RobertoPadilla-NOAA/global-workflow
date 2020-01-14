@@ -25,9 +25,10 @@
 # - Changes to wave_ens_stats (fortran) for paralellism: code now computes separately
 #    stats type (mean, spread or prob) and prob level (JH Alves, Jan 2014)
 #
-# Update log since 2014                                                       #
-# Nov2019 JHAlves - Transitioning to GEFS workflow                            #
-# Dec2019 JHAlves - Merging wave scripts to global workflow                   #
+# Update log since 2014                                                        #
+# Nov2019 JHAlves - Transitioning to GEFS workflow                             #
+# Dec2019 JHAlves - Merging wave scripts to global workflow                    #
+# Jan2020 RPadilla, JHAlves  - Adding error checking                           #
 #                                                                       
 ################################################################################
 #
@@ -99,8 +100,6 @@
     cp  $FIXwave/${buoyfile} buoy_file.data
     echo " $FIXwave/${buoyfile} copied to buoy_file.data."
   else
-    msg="ABNORMAL EXIT: ERR in coping ${buoyfile}."
-    ./postmsg "$jlogfile" "$msg"
     set +x
     echo ' '
     echo '******************************************************* '
@@ -109,7 +108,9 @@
     echo ' '
     echo "$FIXwave/wave_ens_buoy.data  missing." >> $ensemb_log
     [[ "$LOUD" = YES ]] && set -x
-    err=1;export err;./err_chk
+    msg="ABNORMAL EXIT: ERR in coping ${buoyfile}."
+    postmsg "$jlogfile" "$msg"
+    err=1;export err;${errchk} || exit ${err}
     exit_code=1
   fi
 #
@@ -121,15 +122,17 @@
 #       infile=$COMIN/${modIE}${me}.$grdID.t${cyc}z.grib2
        cp  $COMIN/${modIE}${me}.$grdID.t${cyc}z.grib2  ./. 
      else
-       msg="ABNORMAL EXIT: ERR in coping ${modIE}$me.$grdID.t${cyc}z.grib2."
-       ./postmsg "$jlogfile" "$msg"
        echo ' '
        echo '******************************************************* '
        echo "*** ERR : No $COMIN/${modIE}$me.$grdID.t${cyc}z.grib2 copied. *** "
        echo '******************************************************* '
        echo ' '
+       [[ "$LOUD" = YES ]] && set -x
        echo "$COMIN/${modIE}$me.$grdID.t${cyc}z.grib2 missing." >> $ensemb_log
-       err=2;export err;./err_chk
+       msg="ABNORMAL EXIT: ERR in coping ${modIE}$me.$grdID.t${cyc}z.grib2."
+       postmsg "$jlogfile" "$msg"
+
+       err=2;export err;${errchk} || exit ${err}
        exit_code=2
      fi
   done
@@ -208,18 +211,18 @@
      done
    
      iparam=`expr ${iparam} + 1`
-   done
+  done
 
 # 2.c Execute poe or serial command files
 
   if [ "$nparam" -gt '0' ]
   then
 
-  set +x
-  echo ' '
-  echo " Extracting $nmembn x $nparam wave ensembles parameter files "
-  echo ' '
-  [[ "$LOUD" = YES ]] && set -x
+   set +x
+   echo ' '
+   echo " Extracting $nmembn x $nparam wave ensembles parameter files "
+   echo ' '
+   [[ "$LOUD" = YES ]] && set -x
    if [ "$ncmdfile" -gt '1' ]
    then
 #    mpirun.lsf cfp cmdfile
@@ -230,7 +233,7 @@
      ./cmdfile.1
      exit=$?
    fi
- fi
+  fi
 
 # mpiserial section
 # 2.d.1 Ending times on the different processors
@@ -269,41 +272,41 @@
   for me in $membn
   do
 
-  while [ ${iparam} -le ${nparam} ]
-  do
+    while [ ${iparam} -le ${nparam} ]
+    do
 
-    nnip=${arrpar[$iparam-1]}
+     nnip=${arrpar[$iparam-1]}
 
-   if [ ! -f ${nnip}_${me}.t${cyc}z.grib2 ]
-   then
-     msg="ABNORMAL EXIT: ERR in generating base grib parameter file"
-     ./postmsg "$jlogfile" "$msg"
-     set +x
-     echo ' '
-     echo '***************************************** '
-     echo "***            FATAL ERROR            *** "
-     echo "--- No ${nnip}_${me}.t${cyc}z.grib2 file --- "
-     echo '***************************************** '
-     echo ' '
-     [[ "$LOUD" = YES ]] && set -x
-     echo "No ${nnip}_${me}.t${cyc}z.grib2 " >> $wavelog
-     err=3;export err;./err_chk
-     exit_code=3
-   else
-     set +x
-     echo -e "\n Base grib parameter file created succesfully.\n"
-     [[ "$LOUD" = YES ]] && set -x
-     echo -e "\n ${COMOUT}/${nnip}_${me}.t${cyc}z.grib2 \n"
-     rm -f wgrib_${nnip}_${me}.out
-   fi
+     if [ ! -f ${nnip}_${me}.t${cyc}z.grib2 ]
+     then
+       set +x
+       echo ' '
+       echo '******************************************** '
+       echo "***            FATAL ERROR               *** "
+       echo "--- No ${nnip}_${me}.t${cyc}z.grib2 file --- "
+       echo '******************************************** '
+       echo ' '
+       [[ "$LOUD" = YES ]] && set -x
+       msg="ABNORMAL EXIT: ERR in generating base grib parameter file"
+       postmsg "$jlogfile" "$msg"
+       echo "No ${nnip}_${me}.t${cyc}z.grib2 file" >> $wavelog
+       err=3;export err;${errchk} || exit ${err}
+       exit_code=3
+     else
+       set +x
+       echo -e "\n Base grib parameter file created succesfully.\n"
+       [[ "$LOUD" = YES ]] && set -x
+       echo -e "\n ${COMOUT}/${nnip}_${me}.t${cyc}z.grib2 \n"
+       rm -f wgrib_${nnip}_${me}.out
+     fi
 
     iparam=`expr ${iparam} + 1`
 
-  done
+    done
   done
 
 # 2.f Clean up larger grib2 gridded files
-rm -f ${modID}??.${grdID}.t${cyc}z.grib2
+  rm -f ${modID}??.${grdID}.t${cyc}z.grib2
 
 #
 # 2. Generate ensemble mean, spread and probability files
@@ -345,16 +348,16 @@ rm -f ${modID}??.${grdID}.t${cyc}z.grib2
 # Line for doing per parameter, per time stamp
 #            echo "$USHwave/wave_ens_stats.sh ${nip} ${ngrib} ${fhour} 1> wave_ens_stats_${nip}_${fhour}.out 2>&1" >> cmdfile
 # mpiserial block
-            echo "$USHwave/wave_ens_stats.sh ${nip} ${ngrib} ${fhour} 1> wave_ens_stats_${nip}_${fhour}.out 2>&1" >> cmdfile.${ifile}
+      echo "$USHwave/wave_ens_stats.sh ${nip} ${ngrib} ${fhour} 1> wave_ens_stats_${nip}_${fhour}.out 2>&1" >> cmdfile.${ifile}
 
-            if [ "$ncmdfile" -gt '1' ]
-            then
-              ifile=`expr $ifile + 1`
-            fi
-            if [ "$ifile" -gt "$ncmdfile" ]
-            then
-              ifile=1
-            fi
+      if [ "$ncmdfile" -gt '1' ]
+      then
+        ifile=`expr $ifile + 1`
+      fi
+      if [ "$ifile" -gt "$ncmdfile" ]
+      then
+        ifile=1
+      fi
  
       iparam=`expr ${iparam} + 1`
 
@@ -383,7 +386,23 @@ rm -f ${modID}??.${grdID}.t${cyc}z.grib2
      ./cmdfile.1
      exit=$?
    fi
- fi
+
+   if [ "$exit" != '0' ]
+   then
+     set +x
+     echo ' '
+     echo '****************************************************************************** '
+     echo '*** FATAL ERROR : ERROR IN Generating  hourly wave ensembles stats files   *** '
+     echo '****************************************************************************** '
+     echo ' '
+     [[ "$LOUD" = YES ]] && set -x
+     echo "ERROR IN Generating  hourly wave ensembles stats files " >> $wavelog
+     msg="ABNORMAL EXIT: Generating $nmembn hourly to ${end_hour}h wave ensembles stats files  "
+     postmsg "$jlogfile" "$msg"
+     err=4;export err;${errchk}|| exit ${err}
+   fi
+
+  fi
 
 # 2.d.1 Ending times on the different processors
 
@@ -517,21 +536,21 @@ rm -f ${modID}??.${grdID}.t${cyc}z.grib2
 
   done
 
- set +x
+  set +x
   echo ' '
   echo " Regrouping stats files for ${nparam} parameters"
   echo ' '
   [[ "$LOUD" = YES ]] && set -x
-   if [ "$ncmdfile" -gt '1' ]
-   then
-#     mpirun.lsf cfp cmdfile
-     mpirun.lsf mpiserial
-     exit=$?
-   else
+  if [ "$ncmdfile" -gt '1' ]
+  then
+#   mpirun.lsf cfp cmdfile
+    mpirun.lsf mpiserial
+    exit=$?
+  else
 #     ./cmdfile
-     ./cmdfile.1
-     exit=$?
-   fi
+    ./cmdfile.1
+    exit=$?
+  fi
 
 # 2.e Check for errors and create bundle files
   rm -f ${WAV_MOD_ID}.mean.t${cyc}z.grib2 
@@ -561,8 +580,6 @@ rm -f ${modID}??.${grdID}.t${cyc}z.grib2
 
    if [ ! -f ${WAV_MOD_ID}.${snip}_mean.t${cyc}z.grib2 ]
    then
-     msg="ABNORMAL EXIT: ERR in generating statistics file"
-     ./postmsg "$jlogfile" "$msg"
      set +x
      echo ' '
      echo '***************************************** '
@@ -572,7 +589,9 @@ rm -f ${modID}??.${grdID}.t${cyc}z.grib2
      echo ' '
      [[ "$LOUD" = YES ]] && set -x
      echo "No ${modIE}.${wndID}.$cycle.wind " >> $wavelog
-     err=4;export err;./err_chk
+     msg="ABNORMAL EXIT: ERR in generating statistics file"
+     postmsg "$jlogfile" "$msg"
+     err=5;export err;${errchk} || exit ${err}
      exit_code=4
    else
      set +x
@@ -678,7 +697,6 @@ rm -f ${modID}??.${grdID}.t${cyc}z.grib2
    fi
  fi
 
-
 # mpiserial section
 # 3.f.1 Ending times on the different processors
 
@@ -722,8 +740,6 @@ rm -f ${modID}??.${grdID}.t${cyc}z.grib2
 
     if [ ! -s ${modID}.${bnom}.bull ]
     then
-     msg="ABNORMAL EXIT: ERR in generating bulettin file"
-     ./postmsg "$jlogfile" "$msg"
      set +x
      echo ' '
      echo '***************************************** '
@@ -732,8 +748,10 @@ rm -f ${modID}??.${grdID}.t${cyc}z.grib2
      echo '***************************************** '
      echo ' '
      [[ "$LOUD" = YES ]] && set -x
-     echo "No ${modIE}.${bnom}.bull " >> $wavelog
-     err=5;export err;./err_chk
+     echo "ERROR IN Generating  ${modIE}.${bnom}.bull file  " >> $wavelog
+     msg="ABNORMAL EXIT: ERR in generating bulettin file"
+     postmsg "$jlogfile" "$msg"
+     err=6;export err;${errchk} || exit ${err}
      exit_code=5
    else
      set +x
@@ -771,10 +789,11 @@ rm -f ${modID}??.${grdID}.t${cyc}z.grib2
      echo '*** FATAL ERROR: No bull_tar file found *'
      echo '*************************************** '
      echo ' '
-     echo "$modIE fcst $date $cycle: bull_tar not fouund." >> $wavelog
-     echo $msg
      [[ "$LOUD" = YES ]] && set -x
-     err=6;export err pgm;./err_chk
+     echo "$modIE fcst $date $cycle: bull_tar not found." >> $wavelog
+     msg="ABNORMAL EXIT: ERR in generating bulettin file"
+     postmsg "$jlogfile" "$msg"
+     err=7;export err;${errchk} || exit ${err}
    fi
 
 
@@ -792,10 +811,11 @@ rm -f ${modID}??.${grdID}.t${cyc}z.grib2
      echo '*** FATAL ERROR: No station_tar file found *'
      echo '*************************************** '
      echo ' '
-     echo "$modIE fcst $date $cycle: station_tar not fouund." >> $wavelog
-     echo $msg
+     echo "$modIE fcst $date $cycle: station_tar not found." >> $wavelog
      [[ "$LOUD" = YES ]] && set -x
-     err=7;export err pgm;./err_chk
+     msg="ABNORMAL EXIT: No station_tar file found"
+     postmsg "$jlogfile" "$msg"
+     err=8;export err;${errchk} || exit ${err}
    fi
 
 # 4.b Output all grib2 parameter files to COMOUT
@@ -818,7 +838,9 @@ rm -f ${modID}??.${grdID}.t${cyc}z.grib2
       echo "$modIE fcst $date $cycle: ${WAV_MOD_ID}.${stype}.t${cyc}z.grib2 not fouund." >> $wavelog
       echo $msg
       [[ "$LOUD" = YES ]] && set -x
-      err=7;export err pgm;./err_chk
+      msg="ABNORMAL EXIT: No grib2 file found"
+      postmsg "$jlogfile" "$msg"
+      err=9;export err;${errchk} || exit ${err}
     fi
   done
 
@@ -859,14 +881,15 @@ rm -f ${modID}??.${grdID}.t${cyc}z.grib2
       else
         set +x
         echo ' '
-        echo '*************************************** '
-        echo '*** FATAL ERROR: No ${WAV_MOD_ID}.${snip}_${stype}.t${cyc}z.grib2 file found *'
-        echo '*************************************** '
+        echo '****************************************************************************** '
+        echo '*** FATAL ERROR: No ${WAV_MOD_ID}.${snip}_${stype}.t${cyc}z.grib2 file found  *'
+        echo '****************************************************************************** '
         echo ' '
-        echo "$modIE fcst $date $cycle: ${WAV_MOD_ID}.${snip}_${stype}.t${cyc}z.grib2 not fouund." >> $wavelog
-        echo $msg
         [[ "$LOUD" = YES ]] && set -x
-        err=7;export err pgm;./err_chk
+        echo "$modIE fcst $date $cycle: ${WAV_MOD_ID}.${snip}_${stype}.t${cyc}z.grib2 not found." >> $wavelog
+        msg="ABNORMAL EXIT: No grib2 file found"
+        postmsg "$jlogfile" "$msg"
+        err=10;export err;${errchk} || exit ${err}
       fi
     done
     iparam=`expr ${iparam} + 1`
@@ -887,15 +910,15 @@ rm -f ${modID}??.${grdID}.t${cyc}z.grib2
   if [ "$exit_code" -ne '0' ]
   then
      msg="ABNORMAL EXIT: Problem in GWES STATS"
-     ./postmsg "$jlogfile" "$msg"
+     postmsg "$jlogfile" "$msg"
      echo $msg
-     err=$exit_code ; export err ; ./err_chk
+     err=11 ;export err;${errchk} || exit ${err}
   else
      touch $COMOUT/${WAV_MOD_ID}.$cycle.statsdone
   fi
 
   msg="$job completed normally"
-  ./postmsg "$jlogfile" "$msg"
+  postmsg "$jlogfile" "$msg"
 #
   echo "Ending at : `date`"
 #

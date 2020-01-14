@@ -12,6 +12,7 @@
 #                                                                July, 2007   #
 # Update log                                                                  #
 # Nov2019 JHAlves - Merging wave scripts to global workflow                   #
+# Jan2020 RPadilla, JHAlves  - Adding error checking                          #
 #                                                                             #
 ###############################################################################
 
@@ -44,12 +45,14 @@
     set +x
     echo ' '
     echo '******************************************************************************* '
-    echo '*** FATAL ERROR : ERROR IN ww3_grib2 (COULD NOT CREATE TEMP DIRECTORY) *** '
+    echo '*** FATAL ERROR : ERROR IN ww3_grib2_sbs (COULD NOT CREATE TEMP DIRECTORY) *** '
     echo '******************************************************************************* '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : ERROR IN ww3_grib2 (Could not create temp directory)"
-    exit 1
+    echo "ERROR IN ww3_grib2_sbs (COULD NOT CREATE TEMP DIRECTORY) " >> $wavelog
+    msg="FATAL ERROR : ERROR IN ww3_grib2. Could not create temp directory"
+    postmsg "$jlogfile" "$msg"
+    err=1;export err;${errchk} || exit ${err}
   fi
 
   cd ${gribDIR}
@@ -84,13 +87,15 @@ echo " 1 $CDATE 2 $cycle 3 $EXECwave 4 $EXECcode 5 $COMOUT 6 $WAV_MOD_TAG 7 $SEN
   then
     set +x
     echo ' '
-    echo '***************************************************'
-    echo '*** EXPORTED VARIABLES IN postprocessor NOT SET ***'
-    echo '***************************************************'
+    echo '******************************************************************* '
+    echo '*** EXPORTED VARIABLES IN postprocessor NOT SET (ww3_grib2_sbs) *** '
+    echo '******************************************************************* '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "EXPORTED VARIABLES IN postprocessor NOT SET"
-    exit 1
+    echo "EXPORTED VARIABLES IN postprocessor NOT SET (ww3_grib2_sbs) " >> $wavelog
+    msg="EXPORTED VARIABLES IN postprocessor NOT SET"
+    postmsg "$jlogfile" "$msg"
+    err=2;export err;${errchk} || exit ${err}
   fi
 
 # 0.c Starting time for output
@@ -116,7 +121,7 @@ echo " 1 $CDATE 2 $cycle 3 $EXECwave 4 $EXECcode 5 $COMOUT 6 $WAV_MOD_TAG 7 $SEN
 #     Template copied in mother script ...
 
   set +x
-  echo "   Generate input file for ww3_grib2"
+  echo "   Generate input file for ww3_grib2_sbs"
   [[ "$LOUD" = YES ]] && set -x
 
   sed -e "s/TIME/$tstart/g" \
@@ -130,7 +135,7 @@ echo " 1 $CDATE 2 $cycle 3 $EXECwave 4 $EXECcode 5 $COMOUT 6 $WAV_MOD_TAG 7 $SEN
 # 1.b Run GRIB packing program
 
   set +x
-  echo "   Run ww3_grib2"
+  echo "   Run ww3_grib"
   echo "   Executing $EXECcode/ww3_grib"
   [[ "$LOUD" = YES ]] && set -x
   ENSTAG=""
@@ -144,13 +149,15 @@ echo " 1 $CDATE 2 $cycle 3 $EXECwave 4 $EXECcode 5 $COMOUT 6 $WAV_MOD_TAG 7 $SEN
   then
     set +x
     echo ' '
-    echo '********************************************* '
-    echo '*** FATAL ERROR : ERROR IN ww3_grib2 *** '
-    echo '********************************************* '
+    echo '******************************************************** '
+    echo '*** FATAL ERROR : ERROR running  $EXECcode/ww3_grib *** '
+    echo '******************************************************** '
     echo ' '
     [[ "$LOUD" = YES ]] && set -x
-    postmsg "$jlogfile" "FATAL ERROR : ERROR IN ww3_grib2"
-    exit 3
+    echo "ERROR running  $EXECcode/ww3_grib " >> $wavelog
+    msg="FATAL ERROR : ERROR running  $EXECcode/ww3_grib "
+    postmsg "$jlogfile" "$msg"
+    err=3;export err;${errchk} || exit ${err}
   fi
 
 # 1.c Clean up
@@ -168,29 +175,17 @@ echo " 1 $CDATE 2 $cycle 3 $EXECwave 4 $EXECcode 5 $COMOUT 6 $WAV_MOD_TAG 7 $SEN
     then
       set +x
       echo ' '
-      echo '********************************************* '
-      echo '*** FATAL ERROR : ERROR IN ww3_grib2 *** '
-      echo '********************************************* '
+      echo '********************************************************** '
+      echo '*** FATAL ERROR : IN ww3_grib2_sbs.sh, creating index  *** '
+      echo '********************************************************** '
       echo ' '
-      echo " Error in moving grib file ${outfile} to com"
-      echo ' '
-      [[ "$LOUD" = YES ]] && set -x
-      postmsg "$jlogfile" "FATAL ERROR : ERROR IN ww3_grib2"
-      exit 4
-    fi
-    if [ ! -s $COMOUT/gridded/${outfile} ]
-    then
-      set +x
-      echo ' '
-      echo '*************************************************** '
-      echo '*** FATAL ERROR : ERROR IN ww3_grib2 INDEX FILE *** '
-      echo '*************************************************** '
-      echo ' '
-      echo " Error in moving grib file ${outfile}.idx to com"
+      echo " Error in creating grib index file, ${outfile} to com"
       echo ' '
       [[ "$LOUD" = YES ]] && set -x
-      postmsg "$jlogfile" "FATAL ERROR : ERROR IN creating ww3_grib2 index"
-      exit 4
+      echo "ERROR IN ww3_grib2_sbs.sh, creating index " >> $wavelog
+      msg="ERROR IN ww3_grib2, creating index file"
+      postmsg "$jlogfile" "$msg" 
+      err=4;export err;${errchk} || exit ${err}
     fi
 
     if [ "$SENDDBN" = 'YES' ]

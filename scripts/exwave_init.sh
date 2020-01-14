@@ -18,6 +18,7 @@
 # Update log                                                                  #
 # May2019 JHAlves - Transitioning to GEFS workflow workflow                   #
 # Nov2019 JHAlves - Merging wave scripts to global workflow                   #
+# Jan2020 RPadilla, JHAlves  - Adding error checking                          #
 #                                                                             #
 ###############################################################################
 # --------------------------------------------------------------------------- #
@@ -53,7 +54,7 @@
   if [ -z ${NTASKS} ] 
   then
     echo "FATAL ERROR: requires NTASKS to be set "
-    err=1; export err;${errchk}
+    err=1;export err;${errchk} || exit ${err}
   fi
 
   set +x
@@ -123,7 +124,7 @@
         echo $msg
         [[ "$LOUD" = YES ]] && set -x
         echo "$WAV_MOD_ID init config $date $cycle : ww3_grid.inp.$grdID missing." >> $wavelog
-        err=2;export err;${errchk}
+        err=2;export err;${errchk} || exit ${err}
       fi
 
       [[ ! -d $COMOUT/rundata ]] && mkdir -m 775 -p $COMOUT/rundata
@@ -166,19 +167,6 @@
       ./cmdfile
       exit=$?
     fi
-  
-    if [ "$exit" != '0' ]
-    then
-      set +x
-      echo ' '
-      echo '********************************************'
-      echo '*** POE FAILURE DURING RAW DATA COPYING ***'
-      echo '********************************************'
-      echo '     See Details Below '
-      echo ' '
-      [[ "$LOUD" = YES ]] && set -x
-    fi
-  
   fi 
 
 # 1.a.3 File check
@@ -206,7 +194,7 @@
       sed "s/^/$grdID.out : /g"  $grdID.out
       [[ "$LOUD" = YES ]] && set -x
       echo "$WAV_MOD_ID prep $date $cycle : mod_def.$grdID missing." >> $wavelog
-      err=3;export err;${errchk}
+      err=3;export err;${errchk}|| exit ${err}
     fi
   done
 
