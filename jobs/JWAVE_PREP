@@ -59,7 +59,7 @@ export EXECcode=${EXECcode:-$CODEwave/exe}
 # Set COM Paths and GETGES environment
 ###################################
 # Set COM Paths and GETGES environment
-export COMINwave=${COMINwave:-${ROTDIR:?}}
+export COMINwave=${COMINwave:-${ROTDIR:?}} #XXX ROTDIR or COMROOT??  CHECK JWAVE_POST_SBS as well
 export COMOUTwave=${COMOUTwave:-${ROTDIR:?}}
 export COMIN=${COMIN:-${COMINwave}/${RUN}.${PDY}/${cyc}}
 export COMOUT=${COMOUT:-${COMOUTwave}/${RUN}.${PDY}/${cyc}}

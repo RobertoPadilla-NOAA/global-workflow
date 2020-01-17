@@ -12,8 +12,8 @@ status=$?
 [[ $status -ne 0 ]] && exit $status
 
 # PATH for working directory
-export NET=${NET:-gens}
-export RUN=${RUN:-gwes} #XXX must be export RUN=wave ??
+export NET=${NET:-gfs}
+export RUN=wave
 
 export HOMEgefs=${HOMEgefs:-$NWROOT/gefs.${gefs_ver}}
 export HOMEgfs=${HOMEgfs:-$NWROOT/gfs.${gfs_ver}}
@@ -31,7 +31,7 @@ cd $DATA
 
 export cyc=${cyc:-00}
 export cycle=${cycle:-t${cyc}z}
- 
+  
 # Set PDY
 setpdy.sh
 sh ./PDY
@@ -39,6 +39,9 @@ sh ./PDY
 export pgmout=OUTPUT.$$
 
 export MP_PULSE=0
+
+GEMPAKwave=${HOMEwave}/gempak    #XXX ???
+export NAGRIB_TABLE=${GEMPAKwave}/fix/nagrib.tbl   #XXX ???
 
 # Path to HOME Directory
 export CODEwave=${CODEwave:-${NWROOT}/${NET}_code.${wave_code_ver}/${code_pkg}}
@@ -80,30 +83,49 @@ elif [ "${NET}" == "gfs" ]
 then
   echo 'Placeholder for GFS config'
 fi
-. $PARMwave/wave.parm.${NET}
-. $PARMwave/wave_post.parm.${NET}
 
-export FHMAX=${FHMAX:-384}
-export FHOUT=${FHOUT:-3}
-export FHMAX_HF=${FHMAX_HF:-120}
-export FHOUT_HF=${FHOUT_HF:-1}
+###################################
+# Set up variables and execute script
+###################################
+nfile=$LSB_DJOB_NUMPROC
 
-# Set wave model ID tag to include member number 
-# if ensemble; waveMEMB var empty in deterministic
-# Set wave model ID tag to include member number
-# if ensemble; waveMEMB var empty in deterministic
-membTAG='p'
-if [ "${waveMEMB}" == "00" ]; then membTAG='c'; fi
-export membTAG
-export WAV_MOD_TAG=${WAV_MOD_ID}${waveMEMB}
+# Set up GEMPAK/NTRANS environment
 
-export CFP_VERBOSE=1
+export GRIB=grib
+export EXT=""
+export DBN_ALERT_TYPE=WAVE_GEMPAK
+export fstart=000
+export fend=180
+export finc=3
 
-# Execute the Script  
-$HOMEwave/scripts/exwave_post.sh
+for grdID in $grids
+do
+  DATAgrid=${DATA}/${grdID}_gem
+  mkdir -p -m 755 $DATAgrid
+  echo "$HOMEwave/scripts/exwave_nawips.sh $grdID $grdID $DATAgrid >$DATA/gempak_${grdID}.out 2>&1" >> $DATA/poescript
+done
+
+env
+
+# NOTES: JY 11/06 the following chmod line is missing in phase2 production and original transition package
+# fixing that would create and alert 61 additional mww3enp10m_${yyyymmddcc}f${hhh} files
+# So will fix it in the next upgrade and leave it as it is for the Dell transition
+# chmod 775 $DATA/poescript
+
+if [ $nfile -gt 1 ]
+then
+  chmod 775 $DATA/poescript
+  export MP_PGMMODEL=mpmd
+  export MP_CMDFILE=$DATA/poescript
+  #poe
+  mpirun -n $nfile cfp $MP_CMDFILE
+  export err=$?; err_chk
+else
+  $DATA/poescript
+fi
 err=$?
 if [ $err -ne 0 ]; then
-  msg="FATAL ERROR: ex-script of WAVE_POST failed!"
+  msg="FATAL ERROR: ex-script of WAVE_POST_SBS failed!"
 else
   msg="$job completed normally!"
 fi
@@ -115,4 +137,5 @@ if [ "$KEEPDATA" != "YES" ]; then
   rm -rf $DATA
 fi
 date
+
 
