@@ -2,18 +2,19 @@
 
 date
 export PS4=' $SECONDS + '
-set -x -e
+set -xa
 
 ##########################################
 # Source machine runtime environment
 ##########################################
-. $HOMEgfs/env/${machine}.env wavepost
-status=$?
-[[ $status -ne 0 ]] && exit $status
+#XXX . $HOMEgfs/env/${machine}.env gempak
+#XXX status=$?
+#XXX [[ $status -ne 0 ]] && exit $status
 
 # PATH for working directory
 export NET=${NET:-gfs}
 export RUN=wave
+export model=${model:-gdaswave}
 
 export HOMEgefs=${HOMEgefs:-$NWROOT/gefs.${gefs_ver}}
 export HOMEgfs=${HOMEgfs:-$NWROOT/gfs.${gfs_ver}}
@@ -95,14 +96,15 @@ export GRIB=grib
 export EXT=""
 export DBN_ALERT_TYPE=WAVE_GEMPAK
 export fstart=000
-export fend=180
+#XXX export fend=180
+export fend=9
 export finc=3
 
 for grdID in $grids
 do
   DATAgrid=${DATA}/${grdID}_gem
   mkdir -p -m 755 $DATAgrid
-  echo "$HOMEwave/scripts/exwave_nawips.sh $grdID $grdID $DATAgrid >$DATA/gempak_${grdID}.out 2>&1" >> $DATA/poescript
+  echo "$HOMEwave/scripts/exwave_nawips.sh  $grdID $model $DATAgrid >$DATA/gempak_${grdID}.out 2>&1" >> $DATA/poescript
 done
 
 env
@@ -110,7 +112,7 @@ env
 # NOTES: JY 11/06 the following chmod line is missing in phase2 production and original transition package
 # fixing that would create and alert 61 additional mww3enp10m_${yyyymmddcc}f${hhh} files
 # So will fix it in the next upgrade and leave it as it is for the Dell transition
-# chmod 775 $DATA/poescript
+ chmod 775 $DATA/poescript
 
 if [ $nfile -gt 1 ]
 then
@@ -134,7 +136,7 @@ postmsg "$jlogfile" "$msg"
 # Remove temp directories
 if [ "$KEEPDATA" != "YES" ]; then
   cd $DATAROOT
-  rm -rf $DATA
+##  rm -rf $DATA
 fi
 date
 

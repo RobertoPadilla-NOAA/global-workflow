@@ -39,22 +39,32 @@ echo "D Stokes: Oct 2011 - specific version for wave_multi_1."
 echo "                    Use grib2 for akw, wna and enp."
 #####################################################################
 
-set -xa
-
-if [ $NET = wave ]
-then
-  if [[ "$job" =~ "wave_enp_gempak" ]] || [[ "$job" =~ "wave_wna_gempak" ]] || [[ "$job" =~ "wave_alaska_gempak" ]] || [[ "$job" =~ "wave_multi_2_gempak" ]]
-  then
-    export RUN=$1
+set +xa
+echo "job: $job"
+echo $0 $1 $2 $3
+export RUN=$1 
+#  if [[ "$RUN" =~ "gfswavglo10m" ]] 
+#  then
+    export GRIDproc=$1
     export model=$2
     export DATA=$3
-  fi
+#  fi
   RUN3=`echo $RUN | cut -c1-3`
   RUN4=`echo $RUN | cut -c1-4`
-fi
+echo "RUN3, RUN4: $RUN3 $RUN4"
 
 cd $DATA
-
+#XXX
+echo "===================================================="
+   echo "Values"
+   echo "job:      $job"
+   echo "RUN:      $RUN"
+   echo "GRIDproc: $GRIDproc"
+   echo "model:    $model"
+   echo "DATA:     $DATA"
+   echo "cyc:      $cyc"
+echo "===================================================="
+#XXX
 NAGRIB=nagrib_nc
 
 entry=`grep "^$RUN " $NAGRIB_TABLE | awk 'index($1,"#") != 1 {print $0}'`
@@ -85,58 +95,75 @@ pdsext=no
 maxtries=180
 fhcnt=$fstart
 while [ $fhcnt -le $fend ] ; do
-  if [ $fhcnt -ge 100 ] ; then
-    typeset -Z3 fhr
-  else
-    typeset -Z2 fhr
-  fi
-  fhr=$fhcnt
+  echo "fhcnt: $fhcnt"
 
+#  if [ $fhcnt -ge 100 ] ; then
+#    typeset -Z3 fhr
+#  else
+#    typeset -Z2 fhr
+#  fi
+  if [ $fhcnt -ge 100 ] ; then
+  fhr=$fhcnt
   fhr3=$fhcnt
-  typeset -Z3 fhr3
+  elif [ $fhcnt -ge 10 ] ; then
+  fhr=0$fhcnt
+  fhr3=0$fhcnt
+  elif [ $fhcnt -gt 0 ] ; then
+  fhr=00$fhcnt
+  fhr3=00$fhcnt
+  else
+  fhr=$fhcnt
+  fhr3=$fhcnt
+  fi
+
+####  fhr=$fhcnt
+  echo "fhr: $fhr"
+  echo "fhr3: $fhr3"
+#  fhr3=$fhcnt
+#  typeset -Z3 fhr3
   GRIBIN=$COMIN/${model}.${cycle}.${GRIB}${fhr}${EXT}
   GEMGRD=${RUN}_${PDY}${cyc}f${fhr3}
 
   case $RUN in
-   gfswavglo10m) GRIBIN=$COMIN/multi_1.glo_30m.${cycle}.f${fhr3}.grib2
-         GEMGRD=${RUN}_${PDY}${cyc}f${fhr3}
+   gfswavglo10m) GRIBIN=$COMIN/${model}.${cycle}.global.0p16.f${fhr3}.grib2
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
          NAGRIB=nagrib2 ;;
    gfswavaoc9km) GRIBIN=$COMIN/multi_1.glo_30m.${cycle}.f${fhr3}.grib2
-         GEMGRD=${RUN}_${PDY}${cyc}f${fhr3}
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
          NAGRIB=nagrib2 ;;
    gfswavant9km) GRIBIN=$COMIN/multi_1.glo_30m.${cycle}.f${fhr3}.grib2
-         GEMGRD=${RUN}_${PDY}${cyc}f${fhr3}
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
          NAGRIB=nagrib2 ;;
    nww3 | nah | nph)  
          GRIBIN=$COMIN/${model}.${cycle}.${GRIB}
-         GEMGRD=${RUN}_${PDY}${cyc} ;;
+         GEMGRD=${GRIDproc}_${PDY}${cyc} ;;
     akw | wna | enp)  
          GRIBIN=$COMIN/${model}.${cycle}.${GRIB}.grib2
-         GEMGRD=${RUN}_${PDY}${cyc} 
+         GEMGRD=${GRIDproc}_${PDY}${cyc} 
          NAGRIB=nagrib2 ;;
    mww3) GRIBIN=$COMIN/multi_1.glo_30m.${cycle}.f${fhr3}.grib2
-         GEMGRD=${RUN}_${PDY}${cyc}f${fhr3}
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
          NAGRIB=nagrib2 ;;
    mww3ak10m) GRIBIN=$COMIN/multi_1.ak_10m.${cycle}.f${fhr3}.grib2
-         GEMGRD=${RUN}_${PDY}${cyc}f${fhr3}
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
          NAGRIB=nagrib2 ;;
    mww3ak4m) GRIBIN=$COMIN/multi_1.ak_4m.${cycle}.f${fhr3}.grib2
-         GEMGRD=${RUN}_${PDY}${cyc}f${fhr3}
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
          NAGRIB=nagrib2 ;;
    mww3wna10m) GRIBIN=$COMIN/multi_1.at_10m.${cycle}.f${fhr3}.grib2
-         GEMGRD=${RUN}_${PDY}${cyc}f${fhr3}
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
          NAGRIB=nagrib2 ;;
    mww3wna4m) GRIBIN=$COMIN/multi_1.at_4m.${cycle}.f${fhr3}.grib2
-         GEMGRD=${RUN}_${PDY}${cyc}f${fhr3}
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
          NAGRIB=nagrib2 ;;
    mww3wc10m) GRIBIN=$COMIN/multi_1.wc_10m.${cycle}.f${fhr3}.grib2
-         GEMGRD=${RUN}_${PDY}${cyc}f${fhr3}
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
          NAGRIB=nagrib2 ;;
    mww3wc4m) GRIBIN=$COMIN/multi_1.wc_4m.${cycle}.f${fhr3}.grib2
-         GEMGRD=${RUN}_${PDY}${cyc}f${fhr3}
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
          NAGRIB=nagrib2 ;;
    mww3enp10m) GRIBIN=$COMIN/multi_1.ep_10m.${cycle}.f${fhr3}.grib2
-         GEMGRD=${RUN}_${PDY}${cyc}f${fhr3}
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
          NAGRIB=nagrib2 ;;
   esac
 
@@ -151,7 +178,8 @@ while [ $fhcnt -le $fend ] ; do
   fi
 
   icnt=1
-  while [ $icnt -lt 1000 ]
+#XXX  while [ $icnt -lt 1000 ]
+  while [ $icnt -lt 3 ]
   do
     if [ -r $GRIBIN_chk ] ; then
 #    if [ -s $GRIBIN_chk ] ; then
@@ -226,9 +254,9 @@ done
 #####################################################################
 # GOOD RUN
 set +x
-echo "**************JOB $RUN NAWIPS COMPLETED NORMALLY ON THE IBM"
-echo "**************JOB $RUN NAWIPS COMPLETED NORMALLY ON THE IBM"
-echo "**************JOB $RUN NAWIPS COMPLETED NORMALLY ON THE IBM"
+echo "**************JOB $RUN NAWIPS COMPLETED NORMALLY ON THE DELL"
+echo "**************JOB $RUN NAWIPS COMPLETED NORMALLY ON THE DELL"
+echo "**************JOB $RUN NAWIPS COMPLETED NORMALLY ON THE DELL"
 set -x
 #####################################################################
 
