@@ -11,54 +11,49 @@
 #                             locations.                                      #
 #                                                                             #
 # Remarks :                                                                   #
-# - ??? above scripts are (mostly) run using mpiserial or cfp.                #
-#   ??? script runs in its own directory created in DATA. If all is well      #
+# - ??? above scripts are (mostly) grdID using mpiserial or cfp.              #
+#   ??? script grdIDs in its own directory created in DATA. If all is well    #
 #   ...............                                                           #
 #                                                                             #
 # Origination  : Mar 2000                                                     #
 #                                                                             #
 # Update log                                                                  #
-#  May2008 S Lilly: - add logic to make sure that all of the "                #
+#  May2008 S Lilly:  - add logic to make sure that all of the "               #
 #                     data produced from the restricted ECMWF"                #
 #                     data on the CCS is properly protected."                 #
-# Jan2020 Rpadilla, JHAlves                                                   #
-#                   - Merging wave scripts to global workflow                 #
+# Oct 2011 D Stokes: - specific version for wave_multi_1."                    #
+#                     Use grib2 for akw, wna and enp."                        #
+# Jan2020 Rpadilla,  JHAlves                                                  #
+#                    - Merging wave scripts to global workflow                #
 #                                                                             #
 ###############################################################################
-# --------------------------------------------------------------------------- #
-#XXX Do we need the following lines?
-###################################################################
+#
+
 echo "----------------------------------------------------"
 echo "exnawips - convert NCEP GRIB files into GEMPAK Grids"
 echo "----------------------------------------------------"
-echo "History: Mar 2000 - First implementation of this new script."
-echo "S Lilly: May 2008 - add logic to make sure that all of the "
-echo "                    data produced from the restricted ECMWF"
-echo "                    data on the CCS is properly protected."
-echo "D Stokes: Oct 2011 - specific version for wave_multi_1."
-echo "                    Use grib2 for akw, wna and enp."
-#####################################################################
+
 
 set +xa
 echo "job: $job"
 echo $0 $1 $2 $3
-export RUN=$1 
-#  if [[ "$RUN" =~ "gfswavglo10m" ]] 
+export grdID=$1 
+#  if [[ "$grdID" =~ "gfswavglo10m" ]] 
 #  then
     export GRIDproc=$1
     export model=$2
     export DATA=$3
 #  fi
-  RUN3=`echo $RUN | cut -c1-3`
-  RUN4=`echo $RUN | cut -c1-4`
-echo "RUN3, RUN4: $RUN3 $RUN4"
+  grdID3=`echo $grdID | cut -c1-3`
+  grdID4=`echo $grdID | cut -c1-4`
+echo "grdID3, grdID4: $grdID3 $grdID4"
 
 cd $DATA
 #XXX
 echo "===================================================="
    echo "Values"
    echo "job:      $job"
-   echo "RUN:      $RUN"
+   echo "grdID:      $grdID"
    echo "GRIDproc: $GRIDproc"
    echo "model:    $model"
    echo "DATA:     $DATA"
@@ -67,7 +62,7 @@ echo "===================================================="
 #XXX
 NAGRIB=nagrib_nc
 
-entry=`grep "^$RUN " $NAGRIB_TABLE | awk 'index($1,"#") != 1 {print $0}'`
+entry=`grep "^$grdID " $NAGRIB_TABLE | awk 'index($1,"#") != 1 {print $0}'`
 
 if [ "$entry" != "" ] ; then
   cpyfil=`echo $entry  | awk 'BEGIN {FS="|"} {print $2}'`
@@ -122,16 +117,35 @@ while [ $fhcnt -le $fend ] ; do
 #  fhr3=$fhcnt
 #  typeset -Z3 fhr3
   GRIBIN=$COMIN/${model}.${cycle}.${GRIB}${fhr}${EXT}
-  GEMGRD=${RUN}_${PDY}${cyc}f${fhr3}
+  GEMGRD=${grdID}_${PDY}${cyc}f${fhr3}
+#XXX filenames stil to be fixed, [global.0p16, global.0p25 =>?]
 
-  case $RUN in
+  case $grdID in
    gfswavglo10m) GRIBIN=$COMIN/${model}.${cycle}.global.0p16.f${fhr3}.grib2
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
+         NAGRIB=nagrib2 ;;
+   gdaswavglo10m) GRIBIN=$COMIN/${model}.${cycle}.global.0p16.f${fhr3}.grib2
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
+         NAGRIB=nagrib2 ;;
+   gfswavglo15mxt) GRIBIN=$COMIN/${model}.${cycle}.global.0p25.f${fhr3}.grib2
          GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
          NAGRIB=nagrib2 ;;
    gfswavaoc9km) GRIBIN=$COMIN/multi_1.glo_30m.${cycle}.f${fhr3}.grib2
          GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
          NAGRIB=nagrib2 ;;
    gfswavant9km) GRIBIN=$COMIN/multi_1.glo_30m.${cycle}.f${fhr3}.grib2
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
+         NAGRIB=nagrib2 ;;
+   gdasglobal0p16) GRIBIN=$COMIN/${model}.${cycle}.global.0p16.f${fhr3}.grib2
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
+         NAGRIB=nagrib2 ;;
+   gdasglobal0p25) GRIBIN=$COMIN/${model}.${cycle}.global.0p25.f${fhr3}.grib2
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
+         NAGRIB=nagrib2 ;;
+   gdasarctic9km) GRIBIN=$COMIN/${model}.${cycle}.arctic.9km.f${fhr3}.grib2
+         GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
+         NAGRIB=nagrib2 ;;
+   gdasantarc9km) GRIBIN=$COMIN/${model}.${cycle}.antarc.9km.f${fhr3}.grib2
          GEMGRD=${GRIDproc}_${PDY}${cyc}f${fhr3}
          NAGRIB=nagrib2 ;;
    nww3 | nah | nph)  
@@ -167,11 +181,11 @@ while [ $fhcnt -le $fend ] ; do
          NAGRIB=nagrib2 ;;
   esac
 
-  if [ $RUN = "nww3" -o $RUN = "nah" -o $RUN = "nph" ] ; then
+  if [ $grdID = "nww3" -o $grdID = "nah" -o $grdID = "nph" ] ; then
     GRIBIN_chk=$COMIN/${model}.${cycle}.${GRIB}done 
-  elif [ $RUN = "akw" -o $RUN = "wna" -o $RUN = "enp" ] ; then
+  elif [ $grdID = "akw" -o $grdID = "wna" -o $grdID = "enp" ] ; then
     GRIBIN_chk=$GRIBIN.idx
-  elif [ $RUN4 = "mww3" ]; then
+  elif [ $grdID4 = "mww3" ]; then
     GRIBIN_chk=$GRIBIN.idx
   else
     GRIBIN_chk=$GRIBIN
@@ -235,7 +249,7 @@ EOF
 
   #
   if [ $SENDCOM = "YES" ] ; then
-     if [ $RUN = "ecmwf_hr" -o $RUN = "ecmwf_wave" ] ; then
+     if [ $grdID = "ecmwf_hr" -o $grdID = "ecmwf_wave" ] ; then
        chgrp rstprod $GEMGRD
        chmod 750 $GEMGRD
      fi
@@ -252,11 +266,11 @@ EOF
 done
 
 #####################################################################
-# GOOD RUN
+# GOOD grdID
 set +x
-echo "**************JOB $RUN NAWIPS COMPLETED NORMALLY ON THE DELL"
-echo "**************JOB $RUN NAWIPS COMPLETED NORMALLY ON THE DELL"
-echo "**************JOB $RUN NAWIPS COMPLETED NORMALLY ON THE DELL"
+echo "**************JOB $grdID NAWIPS COMPLETED NORMALLY ON THE DELL"
+echo "**************JOB $grdID NAWIPS COMPLETED NORMALLY ON THE DELL"
+echo "**************JOB $grdID NAWIPS COMPLETED NORMALLY ON THE DELL"
 set -x
 #####################################################################
 

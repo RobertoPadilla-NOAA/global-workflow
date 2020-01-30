@@ -7,17 +7,17 @@ set -xa
 ##########################################
 # Source machine runtime environment
 ##########################################
-#XXX . $HOMEgfs/env/${machine}.env gempak
-#XXX status=$?
-#XXX [[ $status -ne 0 ]] && exit $status
 
-# PATH for working directory
-export NET=${NET:-gfs}
-export RUN=wave
 export model=${model:-gdaswave}
+export NET=${model:-gfs}
+export RUN=${RUN:-gdas}
+export MDC=${MDC:-${RUN}wave}
 
 export HOMEgefs=${HOMEgefs:-$NWROOT/gefs.${gefs_ver}}
 export HOMEgfs=${HOMEgfs:-$NWROOT/gfs.${gfs_ver}}
+export grids=${grids:-'glo_10m aoc_9km ant_9km glo_15mxt'}
+
+
 
 # Add default errchk = err_chk
 export errchk=${errchk:-err_chk}
@@ -41,8 +41,8 @@ export pgmout=OUTPUT.$$
 
 export MP_PULSE=0
 
-GEMPAKwave=${HOMEwave}/gempak    #XXX ???
-export NAGRIB_TABLE=${GEMPAKwave}/fix/nagrib.tbl   #XXX ???
+GEMPAKwave=${HOMEwave}/gempak   
+export NAGRIB_TABLE=${GEMPAKwave}/fix/nagrib.tbl 
 
 # Path to HOME Directory
 export CODEwave=${CODEwave:-${NWROOT}/${NET}_code.${wave_code_ver}/${code_pkg}}
@@ -100,11 +100,15 @@ export fstart=000
 export fend=9
 export finc=3
 
+#grids='glo_10m aoc_9km ant_9km glo_15mxt'
+
 for grdID in $grids
 do
+GEMID="${RUN}`echo $grdID | sed 's/_//'`"
   DATAgrid=${DATA}/${grdID}_gem
   mkdir -p -m 755 $DATAgrid
-  echo "$HOMEwave/scripts/exwave_nawips.sh  $grdID $model $DATAgrid >$DATA/gempak_${grdID}.out 2>&1" >> $DATA/poescript
+#  echo "$HOMEwave/scripts/exwave_nawips.sh  $grdID $model $DATAgrid >$DATA/gempak_${grdID}.out 2>&1" >> $DATA/poescript
+echo "$HOMEwave/scripts/exwave_nawips.sh  ${GEMID} $model $DATAgrid >$DATA/gempak_${grdID}.out 2>&1" >> $DATA/poescript
 done
 
 env
