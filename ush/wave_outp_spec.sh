@@ -32,11 +32,17 @@
   # Use LOUD variable to turn on/off trace.  Defaults to YES (on).
   export LOUD=${LOUD:-YES}; [[ $LOUD = yes ]] && export LOUD=YES
   [[ "$LOUD" != YES ]] && set +x
+   
+  bloc=$1
+  ymdh=$2
+  specdir=$3
+
+  YMDHE=`$NDATE $FHMAX $CDATE`
 
   cd $SPECDATA
 
-  rm -rf spec_$1
-  mkdir spec_$1
+  rm -rf ${specdir}_${bloc}
+  mkdir ${specdir}_${bloc}
   err=$?
   if [ "$err" != '0' ]
   then
@@ -51,9 +57,8 @@
     exit 1
   fi
 
-  cd spec_$1
+  cd ${specdir}_${bloc}
 
-  ymdh=$2
   set +x
   echo ' '
   echo '+--------------------------------+'
@@ -76,7 +81,7 @@
     postmsg "$jlogfile" "LOCATION ID IN ww3_outp_spec.sh NOT SET"
     exit 1
   else
-    buoy=$1
+    buoy=$bloc
     grep $buoy ${DATA}/buoy_log.ww3 > tmp_list.loc
     while read line
     do
@@ -109,7 +114,7 @@
 # 0.c Define directories and the search path.
 #     The tested variables should be exported by the postprocessor script.
 
-  if [ -z "$YMDH" ] || [ -z "$dtspec" ] || [ -z "$EXECwave" ] || \
+  if [ -z "$CDATE" ] || [ -z "$dtspec" ] || [ -z "$EXECcode" ] || \
      [ -z "$WAV_MOD_TAG" ] || [ -z "${STA_DIR}" ]
   then
     set +x
@@ -126,7 +131,8 @@
 # 0.d Starting time for output
 
   tstart="`echo $ymdh | cut -c1-8` `echo $ymdh | cut -c9-10`0000"
-
+  YMD="`echo $ymdh | cut -c1-8`"
+  HMS="`echo $ymdh | cut -c9-10`0000"
   set +x
   echo "   Output starts at $tstart."
   echo ' '
@@ -140,8 +146,8 @@
 
 # 0.f Links to mother directory
 
-  ln -s ${DATA}/mod_def.${uoutpGRD} .
-  ln -s ${DATA}/out_pnt.${uoutpGRD} .
+  ln -s ${DATA}/mod_def.${uoutpGRD} ./mod_def.ww3
+  ln -s ${DATA}/output_${ymdh}0000/out_pnt.${uoutpGRD} ./out_pnt.ww3
 
 # --------------------------------------------------------------------------- #
 # 2.  Generate spectral data file
@@ -151,20 +157,34 @@
   echo "   Generate input file for ww3_outp."
   [[ "$LOUD" = YES ]] && set -x
 
-  sed -e "s/TIME/$tstart/g" \
+  if [ "$specdir" = "bull" ]
+  then
+    tstart="`echo $ymdh | cut -c1-8` `echo $ymdh | cut -c9-10`0000"
+    truntime="`echo $CDATE | cut -c1-8` `echo $YMDH | cut -c9-10`0000"
+    sed -e "s/TIME/$tstart/g" \
+      -e "s/DT/$dtspec/g" \
+      -e "s/POINT/$point/g" \
+      -e "s/REFT/$truntime/g" \
+                               ${DATA}/ww3_outp_bull.inp.tmpl > ww3_outp.inp
+    outfile=${buoy}.bull
+    coutfile=${buoy}.cbull
+  else
+    sed -e "s/TIME/$tstart/g" \
       -e "s/DT/$dtspec/g" \
       -e "s/POINT/$point/g" \
       -e "s/ITYPE/1/g" \
       -e "s/FORMAT/F/g" \
                                ${DATA}/ww3_outp_spec.inp.tmpl > ww3_outp.inp
+    outfile=ww3.`echo $tstart | cut -c3-8``echo $tstart | cut -c10-11`.spc
+  fi
 
 # 2.b Run the postprocessor
 
   set +x
-  echo "   Executing $EXECwave/ww3_outp"
+  echo "   Executing $EXECcode/ww3_outp"
   [[ "$LOUD" = YES ]] && set -x
 
-  $EXECwave/ww3_outp
+  $EXECcode/ww3_outp
   err=$?
 
   if [ "$err" != '0' ]
@@ -184,11 +204,33 @@
 # 3.  Clean up
 # 3.a Move data to directory for station ascii files
 
-  outfile=ww3.`echo $tstart | cut -c3-8``echo $tstart | cut -c10-11`.spc
-
   if [ -f $outfile ]
   then
-    mv $outfile  ${STA_DIR}/spec/$WAV_MOD_TAG.$buoy.spec
+   if [ "${ymdh}" = "${CDATE}" ]
+   then
+     if [ "$specdir" = "bull" ]
+     then
+       cat $outfile | sed -e '9,$d' >> ${STA_DIR}/${specdir}/$WAV_MOD_TAG.$buoy.bull
+       cat $coutfile | sed -e '8,$d' >> ${STA_DIR}/c${specdir}/$WAV_MOD_TAG.$buoy.cbull
+     else
+       cat $outfile | sed -e '8,$d' >> ${STA_DIR}/${specdir}/$WAV_MOD_TAG.$buoy.spec
+     fi
+   elif [ "${ymdh}" = "${YMDHE}" ]
+   then
+     if [ "$specdir" = "bull" ]
+     then
+       cat $outfile | sed -e '1,7d' >> ${STA_DIR}/${specdir}/$WAV_MOD_TAG.$buoy.bull
+       cat $coutfile | sed -e '1,6d' >> ${STA_DIR}/c${specdir}/$WAV_MOD_TAG.$buoy.cbull
+     fi
+   else
+     if [ "$specdir" = "bull" ]
+     then
+       cat $outfile | sed -e '1,7d' | sed -e '2,$d' >> ${STA_DIR}/${specdir}/$WAV_MOD_TAG.$buoy.bull
+       cat $coutfile | sed -e '1,6d' | sed -e '2,$d' >> ${STA_DIR}/c${specdir}/$WAV_MOD_TAG.$buoy.cbull
+     else
+       cat $outfile | sed -n "/^${YMD} ${HMS}$/,\$p" >> ${STA_DIR}/${specdir}/$WAV_MOD_TAG.$buoy.spec
+     fi
+   fi
   else
     set +x
     echo ' '
@@ -203,11 +245,11 @@
 
 # 3.b Clean up the rest
 
-  rm -f ww3_outp.inp
-  rm -f mod_def.ww3 out_pnt.ww3
+#  rm -f ww3_outp.inp
+#  rm -f mod_def.ww3 out_pnt.ww3
 
   cd ..
-  mv -f spec_$buoy done.spec_$buoy
+  mv -f $specdir_$buoy done.$specdir_$buoy
 
   set +x
   echo ' '

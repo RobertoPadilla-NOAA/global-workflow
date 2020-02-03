@@ -4,6 +4,18 @@ date
 export PS4=' $SECONDS + '
 set -x -e
 
+#############################
+# Source relevant config files
+#############################
+configs="base wave wavepost"
+export EXPDIR=${EXPDIR:-$HOMEgfs/parm/config}
+config_path=${EXPDIR:-$NWROOT/gfs.${gfs_ver}/parm/config}
+for config in $configs; do
+    . $config_path/config.$config
+    status=$?
+    [[ $status -ne 0 ]] && exit $status
+done
+
 ##########################################
 # Source machine runtime environment
 ##########################################
@@ -14,9 +26,10 @@ status=$?
 # PATH for working directory
 export NET=${NET:-gfs}
 export RUN=${RUN:-gfs}
+export MDC=${MDC:-${RUN}wave}
 
-export HOMEgefs=${HOMEgefs:-$NWROOT/gefs.${gefs_ver}}
-export HOMEgfs=${HOMEgfs:-$NWROOT/gfs.${gfs_ver}}
+export HOMEgefs=${HOMEgefs:-$NWROOT/$NET.${gefs_ver}}
+export HOMEgfs=${HOMEgfs:-$NWROOT/$NET.${gfs_ver}}
 
 # Add default errchk = err_chk
 export errchk=${errchk:-err_chk}
@@ -51,18 +64,16 @@ export EXECcode=${EXECcode:-$CODEwave/exe}
 # Set COM Paths and GETGES environment
 export COMINwave=${COMINwave:-${COMROOT:?}/${NET}/${envir}}
 export COMOUTwave=${COMOUTwave:-${COMROOT:?}/${NET}/${envir}}
-export COMIN=${COMIN:-${COMINwave}/${RUN}.${PDY}/${cyc}}
-export COMOUT=${COMOUT:-${COMOUTwave}/${RUN}.${PDY}/${cyc}}
+export COMIN=${COMIN:-${COMINwave}/${MDC}.${PDY}/${cyc}}
+export COMOUT=${COMOUT:-${COMOUTwave}/${MDC}.${PDY}/${cyc}}
 
 export COMINice=${COMINice:-${COMROOTp2}/omb/prod}
 export COMINwnd=${COMINwnd:-${COMROOT}/gfs/prod}
 export COMINcur=${COMINcur:-${COMROOTp2}/rtofs/prod}
 
-if [ $SENDCOM = YES ]; then
-  mkdir -p $COMOUT/gridded
-  mkdir -p $COMOUT/station
-  mkdir -p $COMOUT/stats
-fi
+mkdir -p $COMOUT/gridded
+mkdir -p $COMOUT/station
+mkdir -p $COMOUT/stats
 
 export wavelog=${COMOUTwave}/wave.log
 
@@ -95,7 +106,7 @@ export FHOUT_HF=${FHOUT_HF:-1}
 membTAG='p'
 if [ "${waveMEMB}" == "00" ]; then membTAG='c'; fi
 export membTAG
-export WAV_MOD_TAG=${WAV_MOD_ID}${waveMEMB}
+export WAV_MOD_TAG=${MDC}${waveMEMB}
 
 export CFP_VERBOSE=1
 

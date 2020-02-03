@@ -13,7 +13,7 @@ CDATE=${CDATE:-2018010100}
 PDY=$(echo $CDATE | cut -c 1-8)
 cyc=$(echo $CDATE | cut -c 9-10)
 OUTPUT_FILE=${OUTPUT_FILE:-"netcdf"}
-OUTPUT_HISTORY=${OUTPUT_HISTORY:-"trune"}
+OUTPUT_HISTORY=${OUTPUT_HISTORY:-".true."}
 SUFFIX=${SUFFIX:-".nc"}
 if [ $SUFFIX = ".nc" ]; then
   format="netcdf"
@@ -115,6 +115,7 @@ if [ $type = "gfs" ]; then
   echo  "${dirname}${head}sfcanl${SUFFIX}            " >>gfs_${format}a.txt
   echo  "${dirname}${head}atmi*.nc                   " >>gfs_${format}a.txt
   echo  "${dirname}${head}dtfanl.nc                  " >>gfs_${format}a.txt
+  echo  "${dirname}${head}loginc.txt                 " >>gfs_${format}a.txt
 
   #..................
   if [ $OUTPUT_HISTORY = ".true." ]; then
@@ -219,6 +220,7 @@ if [ $type = "gdas" ]; then
   echo  "${dirname}${head}abias_pc                 " >>gdas_restarta.txt
   echo  "${dirname}${head}atmi*nc                  " >>gdas_restarta.txt
   echo  "${dirname}${head}dtfanl.nc                " >>gdas_restarta.txt
+  echo  "${dirname}${head}loginc.txt               " >>gdas_restarta.txt
 
   echo  "${dirname}RESTART/*0000.sfcanl_data.tile1.nc  " >>gdas_restarta.txt
   echo  "${dirname}RESTART/*0000.sfcanl_data.tile2.nc  " >>gdas_restarta.txt
