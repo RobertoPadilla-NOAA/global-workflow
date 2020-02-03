@@ -12,8 +12,8 @@ status=$?
 [[ $status -ne 0 ]] && exit $status
 
 # PATH for working directory
-export NET=${NET:-gens}
-export RUN=${RUN:-gwes} #XXX must be export RUN=wave ??
+export NET=${NET:-gfs}
+export RUN=${RUN:-gfs}
 
 export HOMEgefs=${HOMEgefs:-$NWROOT/gefs.${gefs_ver}}
 export HOMEgfs=${HOMEgfs:-$NWROOT/gfs.${gfs_ver}}
