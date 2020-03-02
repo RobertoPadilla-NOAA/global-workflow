@@ -24,10 +24,12 @@ status=$?
 [[ $status -ne 0 ]] && exit $status
 
 # PATH for working directory
-export NET=${NET:-gfs}
-export RUN=${RUN:-gfs}
+export NET=${NET:-gefs}
+export RUN=${RUN:-gefs}
 export MDC=${MDC:-${RUN}wave}
-
+export modIE=${modIE:-gefs}
+#XXX  GRIDS?? 
+export grdID=${grdID:-glo_30m}
 export HOMEgefs=${HOMEgefs:-$NWROOT/gefs.${gefs_ver}}
 export HOMEgfs=${HOMEgfs:-$NWROOT/gfs.${gfs_ver}}
 
@@ -42,7 +44,7 @@ export DATA=${DATA:-${DATAROOT:?}/${jobid}}
 mkdir -p $DATA
 cd $DATA
 
-cyc=${cyc:-00}
+export cyc=${cyc:-00}
 export cycle=${cycle:-t${cyc}z}
  
 # Set PDY
@@ -106,7 +108,7 @@ export membTAG
 export WAV_MOD_TAG=${MDC}${waveMEMB}
 
 export CFP_VERBOSE=1
-
+exit
 # Execute the Script  
 $HOMEwave/scripts/exwave_stat.sh
 err=$?

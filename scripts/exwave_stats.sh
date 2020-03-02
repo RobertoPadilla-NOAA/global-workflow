@@ -1,34 +1,35 @@
 #!/bin/bash
 #                                                                       
 ################################################################################
-#                                                                       
-# exwave_stats.sh - Compute unified statistics for global wave ensemble
-#                                                                             
-# Packs ensemble mean, spread and probabilities in grib2 format.              
-#                                                                           
-# Requirements:                                                             
-# - wgrib2 with IPOLATES library                                            
-#                                                                           
-# Origination: 
-# - Unreported Waves Group Developer, Feb 2008                               
-#                                                                       
-# Changes:                                                              
-# - expanded parameter list including partitioned data (list in parameter array)
-#   (JH Alves, Jan 2014)                                                
-# - introduced wave ensemble bulletin following spectral bulletin format
-#   (JH Alves, Jan 2014)                                                
-# - introduced two USH scripts for post proc 
-#   - wave_ens_stats.sh : generate unified stats files (mean, spread, prob)
-#   - wave_ens_bull.sh : generates wave ensemble bulletin files        
-#   (JH Alves, Jan 2014)                                                
-# - mpiserial for parallel processing (JH Alves, Jan 2014)                
-# - Changes to wave_ens_stats (fortran) for paralellism: code now computes separately
-#    stats type (mean, spread or prob) and prob level (JH Alves, Jan 2014)
-#
-# Update log since 2014                                                       #
-# Nov2019 JHAlves - Transitioning to GEFS workflow                            #
-# Dec2019 JHAlves - Merging wave scripts to global workflow                   #
-#                                                                       
+#                                                                              #
+# exwave_stats.sh - Compute unified statistics for global wave ensemble        #
+#                                                                              #        
+# Packs ensemble mean, spread and probabilities in grib2 format.               #
+#                                                                              #             
+# Requirements:                                                                #    
+# - wgrib2 with IPOLATES library                                               #              
+#                                                                              #              
+# Origination:                                                                 #
+# - Unreported Waves Group Developer, Feb 2008                                 #               
+#                                                                              #          
+# Changes:                                                                     #           
+# - expanded parameter list including partitioned data                         #
+#   (list in parameter array) (JH Alves, Jan 2014)                             #                 #                                                                              #
+# - introduced wave ensemble bulletin following spectral bulletin format       #
+#   (JH Alves, Jan 2014)                                                       #    
+# - introduced two USH scripts for post proc                                   #
+#   - wave_ens_stats.sh : generate unified stats files (mean, spread, prob)    #
+#   - wave_ens_bull.sh : generates wave ensemble bulletin files                #
+#   (JH Alves, Jan 2014)                                                       #
+# - mpiserial for parallel processing (JH Alves, Jan 2014)                     #
+# - Changes to wave_ens_stats (fortran) for paralellism: code now              #
+#    computes separately stats type (mean, spread or prob) and prob            #
+#    level (JH Alves, Jan 2014)                                                #
+#                                                                              #
+# Update log since 2014                                                        #
+# Nov2019 JHAlves - Transitioning to GEFS workflow                             #
+# Dec2019 JHAlves RPadilla - Merging wave scripts to global workflow           #
+#                                                                              #
 ################################################################################
 #
   set -x
@@ -57,7 +58,6 @@
 #
 # 0.b System-specific settings
 #
-  export grdID='glo_30m'
   npert=${npert:?Parameter npert required for ensemble statistics}
   nmembn=`expr ${npert} + 1`
   export membn="00 `seq -w 1 ${nmembn}`"
