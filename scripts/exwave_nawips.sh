@@ -23,7 +23,7 @@
 #                     data on the CCS is properly protected."                 #
 # Oct 2011 D Stokes: - specific version for wave_multi_1."                    #
 #                     Use grib2 for akw, wna and enp."                        #
-# Jan2020 Rpadilla,  JHAlves                                                  #
+# Jan 2020 RPadilla, JHAlves                                                  #
 #                    - Merging wave scripts to global workflow                #
 #                                                                             #
 ###############################################################################
@@ -35,8 +35,6 @@ echo "----------------------------------------------------"
 
 
 set +xa
-echo "job: $job"
-echo $0 $1 $2 $3
 export grdID=$1 
 #  if [[ "$grdID" =~ "gfswavglo10m" ]] 
 #  then
@@ -53,7 +51,7 @@ cd $DATA
 echo "===================================================="
    echo "Values"
    echo "job:      $job"
-   echo "grdID:      $grdID"
+   echo "grdID:    $grdID"
    echo "GRIDproc: $GRIDproc"
    echo "model:    $model"
    echo "DATA:     $DATA"
