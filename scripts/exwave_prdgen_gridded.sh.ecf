@@ -1,8 +1,8 @@
 #!/bin/ksh
 ###############################################################################
 #                                                                             #
-# This script is the product generator ("graphics job")  for the multi-grid   #
-# MWW3 wave model.                                                            #
+# This script is the product generator ("graphics job")  for the              #
+# GFSv16-wave output for gridded wave fields                                  #
 #                                                                             #
 # Remarks :                                                                   #
 # - Supplemental error output is witten to the wave.log file.                 #
@@ -11,8 +11,8 @@
 # Origination  : 05/02/2007                                                   #
 # Last update  : 05/04/2007                                                   # 
 #                                                                             #
-# May 2020 Roberto.Padilla, JHAlves                                           #
-#          - Merging wave scripts to GFSv16 global workflow                   #
+# May 2020  Roberto.Padilla@noaa.gov, Henroque.HAlves@noaa.gov                # 
+#         - Merging wave scripts to GFSv16 global workflow                    #
 #                                                                             #
 ###############################################################################
 # --------------------------------------------------------------------------- #
@@ -21,10 +21,10 @@
  set -xa
  # Use LOUD variable to turn on/off trace.  Defaults to YES (on).
  export LOUD=${LOUD:-YES}; [[ $LOUD = yes ]] && export LOUD=YES
- #[[ "$LOUD" != YES ]] && set +x
+ [[ "$LOUD" != YES ]] && set +x
  cd $DATA
  postmsg "$jlogfile" "HAS BEGUN on `hostname`"
- msg="Starting MWW3 PRODUCTS SCRIPT"
+ msg="Starting MWW3 GRIDDED PRODUCTS SCRIPT"
  postmsg "$jlogfile" "$msg"
 # Output grids
  grids=${grids:-ao_9km at_10m ep_10m wc_10m glo_30m}
@@ -57,7 +57,6 @@
  while [ $fhcnt -le $FHMAX_WAV ]; do
    fhr=$(printf "%03d" $fhcnt)
    for grdOut in $grids;do
-     #Input grids
      case $grdOut in
        ao_9km)  grdID='arctic.9km' ;;
        at_10m)  grdID='atlocn.0p16' ;;
@@ -99,7 +98,8 @@
 
 # 1.c.1 If gridID eq to global.0p25 interpolate it to global_30m
      if [ "$grdID" = "global.0p25" ]; then
-       cp $GRIBIN  tempgf.$grdID.f${fhr}
+       #cp $GRIBIN  tempgf.$grdID.f${fhr}
+       ln -s $GRIBIN tempgf.$grdID.f${fhr}
        $WGRIB2 -lola 0:720:0.5 -90:361:0.5 gribfile.$grdID.f${fhr}  grib \
                                            tempgf.$grdID.f${fhr} 1> out 2>&1
        OK=$?
@@ -118,13 +118,15 @@
          err=2;export err;err_chk
        fi
      else
-       cp $GRIBIN gribfile.$grdID.f${fhr}
+       #cp $GRIBIN gribfile.$grdID.f${fhr}
+       ln -s $GRIBIN gribfile.$grdID.f${fhr}
      fi
      #
 # 1.d Input template files
      if [ -f $PARMwave/grib2_${modID}.$grdID.f${fhr} ]
      then
-       cp $PARMwave/grib2_${modID}.$grdID.f${fhr} awipsgrb.$grdID.f${fhr}
+       #cp $PARMwave/grib2_${modID}.$grdID.f${fhr} awipsgrb.$grdID.f${fhr}
+       ln -s $PARMwave/grib2_${modID}.$grdID.f${fhr} awipsgrb.$grdID.f${fhr}
      else
        echo '*** ERROR : NO template  grib2_${modID}.$grdID.f${fhr} *** '
        echo "$modID $grdID $fhr prdgen $date $cycle : GRIB template file missing." >> $wavelog
