@@ -32,6 +32,11 @@ export EXECcode=${EXECcode:-CODEwave/exec}
 # Set PDY
 setpdy.sh
 . PDY
+####################################
+# load modules
+####################################
+module use ${HOMEwave}/modulefiles
+module load modulefile_gfswave_prdgen.wcoss_dell_p3
 
 ###################################
 # Set COM Paths and GETGES environment

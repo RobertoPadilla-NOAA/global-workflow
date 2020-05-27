@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/bash
 ###############################################################################
 #                                                                             #
 # This script is the product generator ("graphics job")  for the multi-grid   #
@@ -144,7 +144,6 @@
  echo '   Looping over buoys ... \n'
  
  for bull in $bulls; do
-   bname="b$bull"
    fname="$modID.$bull.cbull"
    oname="awipsbull.$bull.$cycle.$modID"
    headr=`grep "b${bull}=" awipsbull.data | sed 's/=/ /g' |  awk '{ print $3}'`  
@@ -214,8 +213,8 @@
 # 4.  Clean up
 
   set +x; [[ "$LOUD" = YES ]] && set -v
-  rm -f  awipsbull.data cbull.tar 
-  rm -f $modID.*.cbull
+  #rm -f  awipsbull.data cbull.tar 
+  #rm -f $modID.*.cbull
   set +v
 
 # --------------------------------------------------------------------------- #

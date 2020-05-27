@@ -20,9 +20,7 @@ export modID=${RUN}${NET}
 ####################################
 # Path to HOME Directory
 ####################################
-
 export CODEwave=${CODEwave:-${NWROOT}/${NET}_code.${wave_code_ver}/${code_pkg}}
-
 export EXECwave=${EXECwave:-HOMEwave/exec}
 export FIXwave=${FIXwave:-HOMEwave/fix}
 export PARMwave=${PARMwave:-HOMEwave/parm}
@@ -32,6 +30,12 @@ export EXECcode=${EXECcode:-CODEwave/exec}
 # Set PDY
 setpdy.sh
 . PDY
+
+####################################
+# load modules
+####################################
+module use ${HOMEwave}/modulefiles
+module load modulefile_gfswave_prdgen.wcoss_dell_p3
 
 ###################################
 # Set COM Paths and GETGES environment
