@@ -195,12 +195,12 @@
 
 # 3. Send output files to the proper destination
  [[ "$LOUD" = YES ]] && set -x
- if [ $SENDCOM = "YES" ]; then
+ if [ "$SENDCOM" = YES ]; then
    cp  awipsbull.$cycle.$modID $PCOM/awipsbull.$cycle.$modID
-   if [ "$SENDDBN_NTC" = "YES" ]; then
+   if [ "$SENDDBN_NTC" = YES ]; then
      make_ntc_bull.pl  WMOBH NONE KWBC NONE $DATA/awipsbull.$cycle.$modID $PCOM/awipsbull.$cycle.$modID
    else
-     if [ ${envir} = "para" ] || [ ${envir} = "test" ] || [ ${envir} = "dev" ]; then
+     if [ "${envir}" = "para" ] || [ "${envir}" = "test" ] || [ "${envir}" = "dev" ]; then
        echo "Making NTC bulletin for parallel environment, but do not alert."
        [[ "$LOUD" = YES ]] && set -x
        (export SENDDBN=NO; make_ntc_bull.pl  WMOBH NONE KWBC NONE \

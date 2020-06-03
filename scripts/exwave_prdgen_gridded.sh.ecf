@@ -52,6 +52,7 @@
  echo '-----------------------'
  [[ "$LOUD" = YES ]] && set -x
 #=======================================================================
+ 
  ASWELL=(SWELL1 SWELL2) # Indices of HS from partitions
  ASWPER=(SWPER1 SWPER2) # Indices of PERIODS from partitions 
  ASWDIR=(SWDIR1 SWDIR2) # Indices of DIRECTIONS from partitions 
@@ -133,6 +134,7 @@
    fi
    let fhcnt=fhcnt+inc
  done #end time loop
+
 #=======================================================================
 
 # 1.a Grib file (AWIPS and FAX charts)
@@ -179,7 +181,8 @@
      fi
      #
 # 1.d Input template files
-     parmfile=$PARMwave/grib2_awips_multi_1_fh${fhr}.$grdOut
+     #parmfile=$PARMwave/grib2_awips_multi_1_fh${fhr}.$grdOut
+     parmfile=$PARMwave/grib2_${modID}.$grdOut.f${fhr}
      if [ -f $parmfile ]
      then
        #cp $PARMwave/grib2_${modID}.$grdID.f${fhr} awipsgrb.$grdID.f${fhr}
@@ -200,8 +203,8 @@
 # 2.a.1 Set up for tocgrib2
      echo "   Do set up for tocgrib2."
      [[ "$LOUD" = YES ]] && set -x
-     AWIPSGRB=awipsgrib.$grdID.f${fhr}
-
+     #AWIPSGRB=awipsgrib.$grdID.f${fhr}
+     AWIPSGRB=awipsgrib
 # 2.a.2 Make GRIB index
      echo "   Make GRIB index for tocgrib2."
      [[ "$LOUD" = YES ]] && set -x
@@ -230,11 +233,12 @@
      [[ "$LOUD" = YES ]] && set -x
      export pgm=tocgrib2
      export pgmout=tocgrib2.out
-     prep_step
+     . prep_step
 
      export FORT11="gribfile.$grdID.f${fhr}"
      export FORT31="gribindex.$grdID.f${fhr}"
-     export FORT51="$AWIPSGRB.$grdOut.f${fhr}"
+     #export FORT51="$AWIPSGRB.$grdOut.f${fhr}"
+     export FORT51="$AWIPSGRB.$grdID.f${fhr}"
 
      $TOCGRIB2 < awipsgrb.$grdID.f${fhr} parm='KWBJ' > tocgrib2.out 2>&1
      OK=$?
@@ -266,16 +270,16 @@
        echo "      Saving $AWIPSGRB.$grdOut.f${fhr} as grib2.$cycle.awipsww3_${grdID}.f${fhr}"
        echo "          in $PCOM"
        #[[ "$LOUD" = YES ]] && set -x
-       cp $AWIPSGRB.$grdOut.f${fhr} $PCOM/grib2.$cycle.f${fhr}.awipsww3_${grdOut}
+       cp $AWIPSGRB.$grdID.f${fhr} $PCOM/grib2.$cycle.f${fhr}.awipsww3_${grdOut}
        #set +x
      fi
 
      if [ "$SENDDBN_NTC" = 'YES' ]
      then
-       echo "      Sending $AWIPSGRB.$grdOut.f${fhr} to DBNET."
+       echo "      Sending $AWIPSGRB.$grdID.f${fhr} to DBNET."
        $DBNROOT/bin/dbn_alert GRIB_LOW $NET $job $PCOM/grib2.$cycle.f${fhr}.awipsww3_${grdOut}
      fi
-     rm -f $AWIPSGRB.$grdOut.f${fhr} tocgrib2.out
+     rm -f $AWIPSGRB.$grdID.f${fhr} tocgrib2.out
    done # For grids
 
    if [ $fhcnt -ge $FHMAX_HF_WAV ]; then
@@ -292,7 +296,7 @@
 # 5.  Clean up
 
   set +x; [[ "$LOUD" = YES ]] && set -v
-#XXX  rm -f gribfile gribindex.* awipsgrb.* awipsbull.data
+  rm -f gribfile gribindex.* awipsgrb.* awipsbull.data
 #XXX   rm -f $modID.*.cbull
   set +v
 
