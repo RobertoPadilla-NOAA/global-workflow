@@ -15,7 +15,8 @@ cd $DATA
 cyc=${cyc:-00}
 export cycle=${cycle:-t${cyc}z}
 export pgmout=OUTPUT.$$
-export modID=${RUN}${NET}
+#export modID=${RUN}${NET}
+export modID=${modID:-${RUN}${NET}}
 
 ####################################
 # Path to HOME Directory
