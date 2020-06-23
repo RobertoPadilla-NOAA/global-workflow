@@ -11,7 +11,7 @@
 # Origination  : 05/02/2007                                                   #
 # Last update  : 05/04/2007                                                   # 
 #                                                                             #
-# May 2020  Roberto.Padilla@noaa.gov, Henroque.HAlves@noaa.gov                # 
+# May 2020  Roberto.Padilla@noaa.gov, Henrique.HAlves@noaa.gov                # 
 #         - Merging wave scripts to GFSv16 global workflow                    #
 #                                                                             #
 ###############################################################################
@@ -181,12 +181,9 @@
      fi
      #
 # 1.d Input template files
-     #parmfile=$PARMwave/grib2_awips_multi_1_fh${fhr}.$grdOut
      parmfile=$PARMwave/grib2_${modID}.$grdOut.f${fhr}
      if [ -f $parmfile ]
      then
-       #cp $PARMwave/grib2_${modID}.$grdID.f${fhr} awipsgrb.$grdID.f${fhr}
-       #ln -s $PARMwave/grib2_${modID}.$grdID.f${fhr} awipsgrb.$grdID.f${fhr}
        ln -s $parmfile awipsgrb.$grdID.f${fhr}
      else
        echo '*** ERROR : NO template  grib2_${modID}.$grdID.f${fhr} *** '
@@ -240,7 +237,8 @@
      #export FORT51="$AWIPSGRB.$grdOut.f${fhr}"
      export FORT51="$AWIPSGRB.$grdID.f${fhr}"
 
-     $TOCGRIB2 < awipsgrb.$grdID.f${fhr} parm='KWBJ' > tocgrib2.out 2>&1
+     #$TOCGRIB2 < awipsgrb.$grdID.f${fhr} parm='KWBJ' > tocgrib2.out 2>&1
+     $TOCGRIB2 < awipsgrb.$grdID.f${fhr} > tocgrib2.out 2>&1
      OK=$?
      if [ "$OK" != '0' ]
      then
@@ -314,4 +312,4 @@
   msg="$job completed normally"
   postmsg "$jlogfile" "$msg"
 
-# End of MWW3 product generation script -------------------------------------- #
+# End of GFSWAVE product generation script -------------------------------------- #
