@@ -52,7 +52,7 @@
  [[ "$LOUD" = YES ]] && set -x
 
 # 1.a Link the input file and untar it
- BullIn=$COMINwave/$modID.$cycle.cbull_tar
+ BullIn=$COMINwave/$COMPONENTwave.$cycle.cbull_tar
  if [ -f $BullIn ]; then
    cp $BullIn cbull.tar
  else
@@ -66,7 +66,7 @@
    echo ' '
    echo $msg
    [[ "$LOUD" = YES ]] && set -x
-   msg="FATAL ERROR $modID prdgen $date $cycle : bulletin tar missing."
+   msg="FATAL ERROR $COMPONENTwave prdgen $date $cycle : bulletin tar missing."
    echo $msg >> $wavelog
    export err=1; ${errchk}
    exit $err
@@ -94,7 +94,7 @@
    echo ' '
    echo $msg
    [[ "$LOUD" = YES ]] && set -x
-   echo "$modID prdgen $date $cycle : bulletin untar error." >> $wavelog
+   echo "$COMPONENTwave prdgen $date $cycle : bulletin untar error." >> $wavelog
    err=2;export err;err_chk
    exit $err
  fi
@@ -122,7 +122,7 @@
    echo ' '
    echo $msg
    [[ "$LOUD" = YES ]] && set -x
-   echo "$modID prdgen $date $cycle : Bulletin header data file  missing." >> $wavelog
+   echo "$COMPONENTwave prdgen $date $cycle : Bulletin header data file  missing." >> $wavelog
    err=3;export err;err_chk
    exit $err
  fi
@@ -146,8 +146,8 @@
  echo '   Looping over buoys ... \n'
 
  for bull in $bulls; do
-   fname="$modID.$bull.cbull"
-   oname="awipsbull.$bull.$cycle.$modID"
+   fname="$COMPONENTwave.$bull.cbull"
+   oname="awipsbull.$bull.$cycle.$COMPONENTwave"
    headr=`grep "b${bull}=" awipsbull.data | sed 's/=/ /g' |  awk '{ print $3}'`  
    echo "      Processing $bull ($headr $oname) ..." 
  
@@ -163,14 +163,14 @@
      echo ' '
      echo $msg
      [[ "$LOUD" = YES ]] && set -x
-     echo "$modID prdgen $date $cycle : Missing bulletin data." >> $wavelog
+     echo "$COMPONENTwave prdgen $date $cycle : Missing bulletin data." >> $wavelog
      err=4;export err;err_chk
      exit $err
    fi
   
    [[ "$LOUD" = YES ]] && set -x
    
-   formbul.pl -d $headr -f $fname -j $job -m $modID \
+   formbul.pl -d $headr -f $fname -j $job -m $COMPONENTwave \
               -p $PCOM -s NO -o $oname > formbul.out 2>&1
    OK=$?
 
@@ -187,25 +187,26 @@
      echo ' '
      echo $msg
      [[ "$LOUD" = YES ]] && set -x
-     echo "$modID prdgen $date $cycle : error in formbul." >> $wavelog
+     echo "$COMPONENTwave prdgen $date $cycle : error in formbul." >> $wavelog
      err=5;export err;err_chk
      exit $err
    fi
-   if [ -f tempo ]; then
-     rm tempo*
-   fi
-   tr -d '\n' < $oname > tempo
-   rm $oname
+# ======================================================================
+# TEMPORAL FIXING  -didn't work really- 
 
-   sed 's/<<@/\n/g' tempo > tempo2
-   sed '/<<%/,+1d' < tempo2 > tempo3
-   sed  "s/'100000 PERL FORMBUL VERSION 20001206.50//g" < tempo3 >$oname 
-
-   #sed -e 's/<<@/\n/g' -e '/<<%/,+1d' \
-   #    -e "s/'100000 PERL FORMBUL VERSION 20001206.50//g" < tempo >$oname 
+   #if [ -f tempo ]; then
+   #  rm tempo*
+   #fi
+   #tr -d '\n' < $oname > tempo
+   #rm $oname
+#
+   #sed 's/<<@/\n/g' tempo > tempo2
+   #sed '/<<%/,+1d' < tempo2 > tempo3
+   #sed  "s/'100000 PERL FORMBUL VERSION 20001206.50//g" < tempo3 >$oname 
+#========================================================================
    
-cat $oname >> awipsbull.$cycle.$modID
-   mv $oname $PCOM
+   cat $oname >> awipsbull.$cycle.$COMPONENTwave
+   #mv $oname $PCOM
    #XXXrm -f formbul.out $oname
    #mv tempo tempo2 tempo3 $PCOM
  done
@@ -213,15 +214,15 @@ cat $oname >> awipsbull.$cycle.$modID
 # 3. Send output files to the proper destination
  [[ "$LOUD" = YES ]] && set -x
  if [ "$SENDCOM" = YES ]; then
-   cp  awipsbull.$cycle.$modID $PCOM/awipsbull.$cycle.$modID
+   cp  awipsbull.$cycle.$COMPONENTwave $PCOM/awipsbull.$cycle.$COMPONENTwave
    if [ "$SENDDBN_NTC" = YES ]; then
-     make_ntc_bull.pl  WMOBH NONE KWBC NONE $DATA/awipsbull.$cycle.$modID $PCOM/awipsbull.$cycle.$modID
+     make_ntc_bull.pl  WMOBH NONE KWBC NONE $DATA/awipsbull.$cycle.$COMPONENTwave $PCOM/awipsbull.$cycle.$COMPONENTwave
    else
      if [ "${envir}" = "para" ] || [ "${envir}" = "test" ] || [ "${envir}" = "dev" ]; then
        echo "Making NTC bulletin for parallel environment, but do not alert."
        [[ "$LOUD" = YES ]] && set -x
        (export SENDDBN=NO; make_ntc_bull.pl  WMOBH NONE KWBC NONE \
-               $DATA/awipsbull.$cycle.$modID $PCOM/awipsbull.$cycle.$modID)
+               $DATA/awipsbull.$cycle.$COMPONENTwave $PCOM/awipsbull.$cycle.$COMPONENTwave)
      fi
    fi
  fi
@@ -230,8 +231,7 @@ cat $oname >> awipsbull.$cycle.$modID
 # 4.  Clean up
 
   set +x; [[ "$LOUD" = YES ]] && set -v
-  #rm -f  awipsbull.data cbull.tar 
-  #rm -f $modID.*.cbull
+  rm -f $COMPONENTwave.*.cbull  awipsbull.data
   set +v
 
 # --------------------------------------------------------------------------- #

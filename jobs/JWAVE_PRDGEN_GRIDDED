@@ -7,6 +7,16 @@ set -xa
 # PATH for working directory
 export NET=${NET:-wave}
 export RUN=${RUN:-gfs}
+#export modID=${RUN}${NET}
+export COMPONENTwave=${COMPONENTwave:-${RUN}${NET}}
+export fstart=${fstart:-0}
+export FHMAX_WAV=${FHMAX_WAV:-180}       #180 Total of hours to process
+export FHMAX_HF_WAV=${FHMAX_HF_WAV:-72}  #from 00 to  72 inc=3
+export FHOUT_WAV=${FHOUT_WAV:-6}         #from 72 to 180 inc=6
+export FHOUT_HF_WAV=${FHOUT_HF_WAV:-3}
+export maxtries=720
+
+
 export HOMEwave=${HOMEwave:-$(dirname $(dirname $0))} # parent directory of current job card
 export DATA=${DATA:-${DATAROOT:?}/${job}.$$}
 mkdir -p $DATA

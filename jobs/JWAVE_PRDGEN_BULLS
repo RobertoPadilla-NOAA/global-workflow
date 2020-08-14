@@ -7,6 +7,7 @@ set -xa
 # PATH for working directory
 export NET=${NET:-wave}
 export RUN=${RUN:-gfs}
+export COMPONENTwave=${COMPONENTwave:-${RUN}${NET}}
 export HOMEwave=${HOMEwave:-$(dirname $(dirname $0))} # parent directory of current job card
 export DATA=${DATA:-${DATAROOT:?}/${job}.$$}
 mkdir -p $DATA
@@ -45,12 +46,14 @@ export COMOUTwave=${COMOUTwave:-${COMROOT:?}/${NET}/${envir}}
 export COMIN=${COMIN:-${COMINwave}/${RUN}.${PDY}}
 export COMOUT=${COMOUT:-${COMOUTwave}/${RUN}.${PDY}}
 export PCOM=${PCOM:-${COMOUT}/wmo}
+export SENDCOM=${SENDCOM:-YES}
+export SENDDBN_NTC=${SENDDBN_NTC:-YES}
 
 if [ $SENDCOM = YES ]; then
   mkdir -p $COMOUT $PCOM
 fi
 
-export wavelog=${COMOUTwave}/gfswave_prdgbulls.log
+export wavelog=${COMOUTwave}/${COMPONENTwave}_prdgbulls.log
 
 env
 
