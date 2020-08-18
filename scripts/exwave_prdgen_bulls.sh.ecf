@@ -52,7 +52,7 @@
  [[ "$LOUD" = YES ]] && set -x
 
 # 1.a Link the input file and untar it
- BullIn=$COMINwave/$COMPONENTwave.$cycle.cbull_tar
+ BullIn=$COMINwave/${RUNwave}.$cycle.cbull_tar
  if [ -f $BullIn ]; then
    cp $BullIn cbull.tar
  else
@@ -66,7 +66,7 @@
    echo ' '
    echo $msg
    [[ "$LOUD" = YES ]] && set -x
-   msg="FATAL ERROR $COMPONENTwave prdgen $date $cycle : bulletin tar missing."
+   msg="FATAL ERROR ${RUNwave} prdgen $date $cycle : bulletin tar missing."
    echo $msg >> $wavelog
    export err=1; ${errchk}
    exit $err
@@ -94,7 +94,7 @@
    echo ' '
    echo $msg
    [[ "$LOUD" = YES ]] && set -x
-   echo "$COMPONENTwave prdgen $date $cycle : bulletin untar error." >> $wavelog
+   echo "${RUNwave} prdgen $date $cycle : bulletin untar error." >> $wavelog
    err=2;export err;err_chk
    exit $err
  fi
@@ -122,7 +122,7 @@
    echo ' '
    echo $msg
    [[ "$LOUD" = YES ]] && set -x
-   echo "$COMPONENTwave prdgen $date $cycle : Bulletin header data file  missing." >> $wavelog
+   echo "${RUNwave} prdgen $date $cycle : Bulletin header data file  missing." >> $wavelog
    err=3;export err;err_chk
    exit $err
  fi
@@ -146,8 +146,8 @@
  echo '   Looping over buoys ... \n'
 
  for bull in $bulls; do
-   fname="$COMPONENTwave.$bull.cbull"
-   oname="awipsbull.$bull.$cycle.$COMPONENTwave"
+   fname="${RUNwave}.$bull.cbull"
+   oname="awipsbull.$bull.$cycle.${RUNwave}"
    headr=`grep "b${bull}=" awipsbull.data | sed 's/=/ /g' |  awk '{ print $3}'`  
    echo "      Processing $bull ($headr $oname) ..." 
  
@@ -163,14 +163,14 @@
      echo ' '
      echo $msg
      [[ "$LOUD" = YES ]] && set -x
-     echo "$COMPONENTwave prdgen $date $cycle : Missing bulletin data." >> $wavelog
+     echo "${RUNwave} prdgen $date $cycle : Missing bulletin data." >> $wavelog
      err=4;export err;err_chk
      exit $err
    fi
   
    [[ "$LOUD" = YES ]] && set -x
    
-   formbul.pl -d $headr -f $fname -j $job -m $COMPONENTwave \
+   formbul.pl -d $headr -f $fname -j $job -m ${RUNwave} \
               -p $PCOM -s NO -o $oname > formbul.out 2>&1
    OK=$?
 
@@ -187,7 +187,7 @@
      echo ' '
      echo $msg
      [[ "$LOUD" = YES ]] && set -x
-     echo "$COMPONENTwave prdgen $date $cycle : error in formbul." >> $wavelog
+     echo "${RUNwave} prdgen $date $cycle : error in formbul." >> $wavelog
      err=5;export err;err_chk
      exit $err
    fi
@@ -205,7 +205,7 @@
    #sed  "s/'100000 PERL FORMBUL VERSION 20001206.50//g" < tempo3 >$oname 
 #========================================================================
    
-   cat $oname >> awipsbull.$cycle.$COMPONENTwave
+   cat $oname >> awipsbull.$cycle.${RUNwave}
    #mv $oname $PCOM
    #XXXrm -f formbul.out $oname
    #mv tempo tempo2 tempo3 $PCOM
@@ -214,15 +214,15 @@
 # 3. Send output files to the proper destination
  [[ "$LOUD" = YES ]] && set -x
  if [ "$SENDCOM" = YES ]; then
-   cp  awipsbull.$cycle.$COMPONENTwave $PCOM/awipsbull.$cycle.$COMPONENTwave
+   cp  awipsbull.$cycle.${RUNwave} $PCOM/awipsbull.$cycle.${RUNwave}
    if [ "$SENDDBN_NTC" = YES ]; then
-     make_ntc_bull.pl  WMOBH NONE KWBC NONE $DATA/awipsbull.$cycle.$COMPONENTwave $PCOM/awipsbull.$cycle.$COMPONENTwave
+     make_ntc_bull.pl  WMOBH NONE KWBC NONE $DATA/awipsbull.$cycle.${RUNwave} $PCOM/awipsbull.$cycle.${RUNwave}
    else
      if [ "${envir}" = "para" ] || [ "${envir}" = "test" ] || [ "${envir}" = "dev" ]; then
        echo "Making NTC bulletin for parallel environment, but do not alert."
        [[ "$LOUD" = YES ]] && set -x
        (export SENDDBN=NO; make_ntc_bull.pl  WMOBH NONE KWBC NONE \
-               $DATA/awipsbull.$cycle.$COMPONENTwave $PCOM/awipsbull.$cycle.$COMPONENTwave)
+               $DATA/awipsbull.$cycle.${RUNwave} $PCOM/awipsbull.$cycle.${RUNwave})
      fi
    fi
  fi
@@ -231,7 +231,7 @@
 # 4.  Clean up
 
   set +x; [[ "$LOUD" = YES ]] && set -v
-  rm -f $COMPONENTwave.*.cbull  awipsbull.data
+  rm -f ${RUNwave}.*.cbull  awipsbull.data
   set +v
 
 # --------------------------------------------------------------------------- #

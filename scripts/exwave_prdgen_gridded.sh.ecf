@@ -72,7 +72,7 @@
        glo_30m) grdID='global.0p25' ;;
        *)       grdID= ;;
      esac
-     GRIBIN=$COMINwave/$COMPONENTwave.$cycle.$grdID.f${fhr}.grib2
+     GRIBIN=$COMINwave/$RUNwave.$cycle.$grdID.f${fhr}.grib2
      GRIBIN_chk=$GRIBIN.idx
 
      icnt=1
@@ -96,11 +96,11 @@
          echo ' '
          echo $msg
          [[ "$LOUD" = YES ]] && set -x
-         echo "$COMPONENTwave $grdID ${fhr} prdgen $date $cycle : GRIB file missing." >> $wavelog
+         echo "$RUNwave $grdID ${fhr} prdgen $date $cycle : GRIB file missing." >> $wavelog
          err=1;export err;${errchk} || exit ${err}
        fi
      done
-     GRIBOUT=$COMPONENTwave.$cycle.$grdID.f${fhr}.clipped.grib2
+     GRIBOUT=$RUNwave.$cycle.$grdID.f${fhr}.clipped.grib2
 
      iparam=1
      while [ ${iparam} -le ${nparam} ]; do
@@ -151,7 +151,7 @@
        *)       grdID= ;;
      esac
      #
-     GRIBIN=$COMPONENTwave.$cycle.$grdID.f${fhr}.clipped.grib2
+     GRIBIN=$RUNwave.$cycle.$grdID.f${fhr}.clipped.grib2
      GRIBIN_chk=$GRIBIN.idx
 
 # 1.c.1 If gridID eq to global.0p25 interpolate it to global_30m
@@ -172,7 +172,7 @@
          echo ' '
          echo $msg
          #[[ "$LOUD" = YES ]] && set -x
-         echo "$COMPONENTwave $grdID prdgen $date $cycle : error in grbindex." >> $wavelog
+         echo "$RUNwave $grdID prdgen $date $cycle : error in grbindex." >> $wavelog
          err=2;export err;err_chk
        fi
      else
@@ -181,13 +181,13 @@
      fi
      #
 # 1.d Input template files
-     parmfile=$PARMwave/grib2_${COMPONENTwave}.$grdOut.f${fhr}
+     parmfile=$PARMwave/grib2_${RUNwave}.$grdOut.f${fhr}
      if [ -f $parmfile ]
      then
        ln -s $parmfile awipsgrb.$grdID.f${fhr}
      else
-       echo '*** ERROR : NO template  grib2_${COMPONENTwave}.$grdID.f${fhr} *** '
-       echo "$COMPONENTwave $grdID $fhr prdgen $date $cycle : GRIB template file missing." >> $wavelog
+       echo '*** ERROR : NO template  grib2_${RUNwave}.$grdID.f${fhr} *** '
+       echo "$RUNwave $grdID $fhr prdgen $date $cycle : GRIB template file missing." >> $wavelog
        err=3;export err;${errchk} || exit ${err}
      fi
      #
@@ -220,7 +220,7 @@
        echo ' '
        echo $msg
        #[[ "$LOUD" = YES ]] && set -x
-       echo "$COMPONENTwave $grdID prdgen $date $cycle : error in grbindex." >> $wavelog
+       echo "$RUNwave $grdID prdgen $date $cycle : error in grbindex." >> $wavelog
        err=4;export err;err_chk
      fi
 
@@ -253,7 +253,7 @@
        echo ' '
        echo $msg
        #[[ "$LOUD" = YES ]] && set -x
-       echo "$COMPONENTwave prdgen $date $cycle : error in tocgrib2." >> $wavelog
+       echo "$RUNwave prdgen $date $cycle : error in tocgrib2." >> $wavelog
        err=5;export err;err_chk
      else
        echo '*** tocgrib2 ran succesfully *** '
@@ -274,8 +274,8 @@
 
      if [ "$SENDDBN_NTC" = 'YES' ]
      then
-       echo "      Sending $AWIPSGRB.$grdID.f${fhr} to DBNET."
-       $DBNROOT/bin/dbn_alert GRIB_LOW $NET $job $PCOM/grib2.$cycle.f${fhr}.awipsww3_${grdOut}
+       echo "      Sending $AWIPSGRB.$grdID.f${fhr} to DBRUN."
+       $DBNROOT/bin/dbn_alert GRIB_LOW $RUN $job $PCOM/grib2.$cycle.f${fhr}.awipsww3_${grdOut}
      fi
      rm -f $AWIPSGRB.$grdID.f${fhr} tocgrib2.out
    done # For grids
@@ -295,7 +295,7 @@
 
   set +x; [[ "$LOUD" = YES ]] && set -v
   rm -f gribfile gribindex.* awipsgrb.* awipsbull.data
-#XXX   rm -f $COMPONENTwave.*.cbull
+#XXX   rm -f $RUNwave.*.cbull
   set +v
 
 # --------------------------------------------------------------------------- #

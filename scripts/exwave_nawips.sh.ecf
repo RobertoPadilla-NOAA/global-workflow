@@ -49,7 +49,7 @@ while [ $fhcnt -le $FHMAX_WAV ]; do
       *)       gridIDin= 
                grdIDout= ;;
     esac
-    GRIBIN=$COMINwave/$COMPONENTwave.$cycle.$grdIDin.f${fhr}.grib2
+    GRIBIN=$COMINwave/$RUNwave.$cycle.$grdIDin.f${fhr}.grib2
     GRIBIN_chk=$GRIBIN.idx
     if [ "$grdIDin" = "global.0p25" ]; then
       #cp $GRIBIN  tempgf.$grdID.f${fhr}
@@ -68,7 +68,7 @@ while [ $fhcnt -le $FHMAX_WAV ]; do
         echo ' '
         echo $msg
         #[[ "$LOUD" = YES ]] && set -x
-        echo "$COMPONENTwave $grdID prdgen $date $cycle : error in grbindex." >> $wavelog
+        echo "$RUNwave $grdID prdgen $date $cycle : error in grbindex." >> $wavelog
         err=2;export err;err_chk
       else
         #cp $GRIBIN gribfile.$grdID.f${fhr}
@@ -96,7 +96,7 @@ while [ $fhcnt -le $FHMAX_WAV ]; do
         echo ' '
         echo $msg
         [[ "$LOUD" = YES ]] && set -x
-        echo "$COMPONENTwave $grdID ${fhr} prdgen $date $cycle : GRIB file missing." >> $wavelog
+        echo "$RUNwave $grdID ${fhr} prdgen $date $cycle : GRIB file missing." >> $wavelog
         err=1;export err;${errchk} || exit ${err}
       fi
     done

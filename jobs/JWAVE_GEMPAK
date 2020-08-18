@@ -14,9 +14,10 @@ date
 #####################################
 # SET SOME VARIABLES
 export grids=${grids:-'glo_30m at_10m ep_10m wc_10m ao_9km'}
-export NET=${NET:-wave}
+export NET=${NET:-gfs}
 export RUN=${RUN:-gfs}
-export COMPONENTwave=${COMPONENTwave:-${RUN}${NET}}
+export COMPONENT=${COMPONENT:-wave}
+export RUNwave=${RUNwave:-${RUN}${COMPONENT}}
 #export modID=${modID:-${RUN}${NET}}
 export fstart=${fstart:-0}
 export FHMAX_WAV=${FHMAX_WAV:-180}  #180 Total of hours to process
@@ -33,6 +34,8 @@ export SENDECF=${SENDECF:-YES}
 
 export COMINwave=${COMINwave:-${COMROOT}/${NET}/${envir}/${RUN}.${PDY}}
 export COMOUT=${COMOUT:-${COMROOT}/${NET}/${envir}/${RUN}.${PDY}/gempak}
+#export COMIN=${COMIN:-$(compath.py ${NET}/${envir}/${RUN}.${PDY})/${cyc}/$COMPONENT}
+#export COMOUT=${COMOUT:-${COMROOT}/${NET}/${envir}/${RUN}.${PDY}/${cyc}/$COMPONENT/gempak}
 
 if [ ! -f $COMOUT ] ; then
   mkdir -p -m 775 $COMOUT
@@ -61,7 +64,7 @@ export sigMODE=post # Only post-processing done here, but may need to be revised
 # Path to HOME Directory
 ####################################
 
-export HOMEwave=${HOMEwave:-${NWROOT:?}/wave_nfcens.${wave_nfcens_ver}}
+export HOMEwave=${HOMEwave:-$(dirname $(dirname $0))} # parent directory of current job card
 export GEMwave=${GEMwave:-$HOMEwave/gempak}
 export FIXwave=${FIXwave:-HOMEwave/fix}
 
